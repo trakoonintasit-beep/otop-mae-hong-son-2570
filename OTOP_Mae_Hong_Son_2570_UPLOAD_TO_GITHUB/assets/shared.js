@@ -4,7 +4,8 @@
   const STORAGE_KEY = 'otop_mhs_2570_demo_products_v2';
   const DEMO_PW_KEY = 'otop_mhs_2570_demo_auth_v2';
   const DISTRICTS = ['เมืองแม่ฮ่องสอน', 'ปาย', 'ปางมะผ้า', 'ขุนยวม', 'แม่ลาน้อย', 'แม่สะเรียง', 'สบเมย'];
-  const CATEGORIES = ['อาหาร', 'เครื่องดื่ม', 'ผ้าและเครื่องแต่งกาย', 'ของใช้', 'ของที่ระลึก', 'สมุนไพร'];
+  const CATEGORIES = ['อาหาร', 'เครื่องดื่ม', 'ผ้าและเครื่องแต่งกาย', 'ของใช้ ของตกแต่ง ของที่ระลึก', 'สมุนไพร'];
+  const canonicalCategory = value => ['ของใช้','ของที่ระลึก','ของใช้ ของตกแต่ง ของที่ระลึก'].includes(value) ? 'ของใช้ ของตกแต่ง ของที่ระลึก' : value;
   const configured = !!(CONFIG.supabaseUrl && CONFIG.supabaseAnonKey);
   let supabaseClient = null;
   function client() {
@@ -17,24 +18,24 @@
     if (configured) {
       const { data, error } = await client().from('products').select('*').eq('is_published', true).order('id', {ascending: true});
       if (error) throw error;
-      return data || [];
+      return (data || []).map(p=>({...p, category:canonicalCategory(p.category)}));
     }
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      try { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) return parsed.filter(row => row.is_published !== false); } catch {}
+      try { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) return parsed.filter(row => row.is_published !== false).map(p=>({...p,category:canonicalCategory(p.category)})); } catch {}
     }
     const res = await fetch('data/products.json');
     if (!res.ok) throw new Error('อ่านข้อมูลสาธิตไม่สำเร็จ กรุณาเปิดผ่าน Web Server');
-    return res.json();
+    return (await res.json()).map(p=>({...p,category:canonicalCategory(p.category)}));
   }
   async function allDemoProducts() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      try { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) return parsed; } catch {}
+      try { const parsed = JSON.parse(saved); if (Array.isArray(parsed)) return parsed.map(p=>({...p,category:canonicalCategory(p.category)})); } catch {}
     }
     const res = await fetch('data/products.json');
     if (!res.ok) throw new Error('ไม่สามารถโหลดรายการตัวอย่าง');
-    return res.json();
+    return (await res.json()).map(p=>({...p,category:canonicalCategory(p.category)}));
   }
   function saveDemoProducts(rows) { localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); }
   function esc(value) { return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
@@ -42,7 +43,7 @@
     const v = String(value ?? '').trim();
     if (/^https:\/\//i.test(v) || /^data:image\/(?:png|jpeg|webp);base64,[a-z\d+/=]+$/i.test(v)) return v;
     if (/^assets\/images\/[a-z0-9_.-]+\.(png|jpg|jpeg|webp)$/i.test(v)) return v;
-    return 'assets/images/hero-mae-hong-son.png';
+    return 'assets/images/hero-mae-hong-son.webp';
   }
   function externalUrl(value) { const v=String(value||'').trim(); if (/^https:\/\//i.test(v)) return v; return ''; }
   function whatsappPhone(value) { return String(value||'').replace(/[^+0-9]/g, ''); }
@@ -61,5 +62,5 @@
     return Array.from(new Uint8Array(raw)).map(x=>x.toString(16).padStart(2,'0')).join('');
   }
   const money = value => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 }).format(Number(value) || 0);
-  window.OTOP = {CONFIG, STORAGE_KEY, DEMO_PW_KEY, DISTRICTS, CATEGORIES, configured, client, sourceProducts, allDemoProducts, saveDemoProducts, esc, imgUrl, externalUrl, whatsappPhone, gmap, hashPassword, money};
+  window.OTOP = {CONFIG, STORAGE_KEY, DEMO_PW_KEY, DISTRICTS, CATEGORIES, canonicalCategory, configured, client, sourceProducts, allDemoProducts, saveDemoProducts, esc, imgUrl, externalUrl, whatsappPhone, gmap, hashPassword, money};
 })();

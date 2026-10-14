@@ -1,85 +1,134 @@
-# OTOP Mae Hong Son Digital Catalog 2570 — พร้อมหน้าผู้ดูแลระบบ
+# OTOP Mae Hong Son Digital Catalog v2.2
 
-แคตตาล็อกสินค้า OTOP จังหวัดแม่ฮ่องสอน แบบ Responsive พร้อมระบบค้นหา หมวดหมู่ แผนที่ Leaflet / OpenStreetMap รายละเอียดสินค้า และ **หน้า Admin สำหรับเพิ่ม แก้ไข ลบข้อมูล**
+> เริ่มต้นอัปเดตได้จาก `CHANGELOG_v2_2.md` และ `UPDATE_GITHUB.txt` อย่าเขียนทับการเชื่อมต่อ Supabase ใน `assets/config.js` เดิม
 
-## เข้าใช้งาน
+# OTOP Mae Hong Son Digital Catalog 2570 — เวอร์ชันปรับปรุง v2.1
 
-- เว็บไซต์ลูกค้า: `index.html`
-- หลังบ้าน: `admin.html`
-- ปุ่ม "เข้าสู่ระบบเจ้าหน้าที่" ที่หัวเว็บไซต์
-- ข้อมูลตัวอย่างใน `data/products.json` จำนวน 12 รายการ **ไม่ใช่สินค้า ราคา เบอร์โทร หรือพิกัดจริง**
+เว็บไซต์ One Page สำหรับสำนักงานพัฒนาชุมชนจังหวัดแม่ฮ่องสอน ภายใต้แนวคิด **“ค้นหา • ช้อป • เที่ยว • ถึงที่ในหน้าเดียว”** รองรับมือถือและคอมพิวเตอร์ พร้อมหน้า Admin เพิ่ม/แก้ไข/ลบสินค้า
 
-## โหมด A: ทดสอบในเครื่อง (ใช้งานทันที ไม่ต้องมีเซิร์ฟเวอร์ฐานข้อมูล)
+> **สถานะของไฟล์นี้:** เป็นซอร์สโค้ดพร้อมอัปโหลด GitHub Pages และรองรับการเชื่อม Supabase แต่ยัง **ไม่ได้เชื่อมฐานข้อมูลออนไลน์จริง** และยัง **ไม่มีบัญชีผู้ดูแลออนไลน์** สินค้า 12 รายการและพิกัดเป็นข้อมูลทดลองเท่านั้น
 
-เปิดจาก root ของโปรเจกต์ด้วยเว็บเซิร์ฟเวอร์ เช่น `python -m http.server 8080` แล้วเข้า `http://localhost:8080/admin.html`
+## สิ่งที่เพิ่มใน v2.1
 
-1. หน้าแรกจะแจ้ง **โหมดสาธิตเฉพาะเบราว์เซอร์**
-2. ตั้งรหัสผ่านทดลองอย่างน้อย 8 ตัวอักษรด้วยตัวเอง (ไม่มีรหัสเริ่มต้นฝังในโค้ด)
-3. หลังเข้าสู่ระบบ เพิ่ม/แก้ไข/ลบสินค้า และเลือกรูปภาพหรือ URL ได้
-4. กลับไปดูหน้า `index.html` ในเบราว์เซอร์เดียวกัน ระบบจะแสดงสินค้าที่บันทึกไว้
-5. การแก้ไขในโหมดนี้เก็บใน `localStorage` ของเบราว์เซอร์เท่านั้น **ไม่อัปเดตฐานข้อมูลหรือเว็บไซต์ของผู้อื่น**
+- ค้นหา/กรองหมวดสินค้าและ 7 อำเภอ พร้อมเรียงตามราคาและแสดงเพิ่มเติมเป็นชุด
+- ลิงก์สินค้าแบบแยกรายการ (`#product-1`) แชร์ให้ผู้อื่นเปิดสินค้าชิ้นเดียวได้
+- QR Code ต่อสินค้า: สร้างจากลิงก์ในเบราว์เซอร์ พร้อมบันทึก PNG หรือคัดลอกลิงก์ (ใช้ไลบรารี `qrcodejs` จาก CDN; หากโหลดไม่ได้จะมีปุ่มคัดลอกลิงก์สำรอง)
+- ใส่ข้อความเตือนชัดเจนในโหมดสาธิต และ **ไม่แสดงปุ่มนำทาง Google Maps ภายนอกสำหรับพิกัดสาธิต**
+- Admin มีปุ่มสำรองข้อมูลเป็น JSON และนำเข้าข้อมูลทดลองจาก JSON ได้เฉพาะเบราว์เซอร์
+- เพิ่มสินค้าใหม่จะเริ่มเป็น **ฉบับร่าง** ผู้ดูแลต้องยืนยันสิทธิ์เผยแพร่ข้อมูลก่อนกดเผยแพร่
+- รูปภาพตัวอย่างเปลี่ยนเป็น WebP ขนาดรวมลดจากประมาณ 17.3 MB เหลือ 1.3 MB
+- `noindex` ขณะเป็นต้นแบบสาธิต เพื่อไม่ให้เครื่องมือค้นหานำข้อมูลตัวอย่างไปแสดงเป็นสินค้าจริง
+- ปรับปรุงการแสดงผลบนมือถือ การเข้าถึงผ่านคีย์บอร์ด และรองรับโหมดลดการเคลื่อนไหว
 
-> **คำเตือนความปลอดภัย:** รหัสผ่านทดลองนี้เป็นเพียงตัวล็อกหน้าจอในเครื่อง ไม่ใช่ระบบยืนยันตัวตนฝั่งเซิร์ฟเวอร์ การแก้ไขข้อมูล localStorage สามารถทำผ่าน Developer Tools ได้โดยไม่ต้องใช้รหัสผ่าน อย่าเข้าใจว่าปลอดภัยสำหรับเก็บข้อมูลจริง หรือใช้ตัวล็อกนี้เป็นการคุมสิทธิ์บน GitHub Pages แบบสาธารณะ
+## โครงสร้างไฟล์
 
-## โหมด B: ออนไลน์ ปลอดภัยด้วย Supabase Auth + Postgres RLS
-
-GitHub Pages เป็น static hosting จึงไม่มีฐานข้อมูลที่เขียนจากเบราว์เซอร์และไม่มีระบบรหัสผ่านฝั่งเซิร์ฟเวอร์ให้เอง ต้องใช้บริการ Backend เพิ่มเติม เช่น Supabase เพื่อให้ข้อมูลสินค้าที่ Admin แก้ไขแสดงต่อผู้เข้าชมทุกคน
-
-1. สมัคร Supabase และสร้าง Project ภายใต้บัญชีหน่วยงานที่มีการกำหนดผู้รับผิดชอบ
-2. ใน Supabase → `SQL Editor` รันไฟล์ `supabase/setup.sql` เพื่อสร้าง `public.products`, `public.admins`, Storage bucket `product-images` และ Row Level Security
-3. Supabase → `Authentication → Users` สร้างผู้ใช้ (อีเมล/รหัสผ่าน) สำหรับเจ้าหน้าที่ที่ได้รับมอบหมาย ใช้รหัสผ่านที่แข็งแรง ห้ามส่งรหัสผ่านผ่านแชต
-4. ที่ SQL Editor รันคำสั่งนี้โดยแทน `YOUR_ADMIN_EMAIL@example.com` เป็นอีเมลผู้ดูแลที่สร้างแล้ว:
-   ```sql
-   INSERT INTO public.admins(user_id)
-   SELECT id FROM auth.users WHERE email = 'YOUR_ADMIN_EMAIL@example.com'
-   ON CONFLICT (user_id) DO NOTHING;
-   ```
-5. เข้า `Project Settings → API` คัดลอก **Project URL** และ **anon / publishable key** ไปใส่ใน `assets/config.js`:
-   ```js
-   window.OTOP_CONFIG = {
-     supabaseUrl: 'https://YOUR_PROJECT.supabase.co',
-     supabaseAnonKey: 'YOUR_SUPABASE_ANON_OR_PUBLISHABLE_KEY'
-   };
-   ```
-   ตัว **anon/publishable key** เปิดเผยได้และทำงานร่วมกับ RLS; **ห้ามนำ service_role หรือ secret key** ไปไว้ใน source code, หน้าเว็บ หรือ GitHub โดยเด็ดขาด
-6. ตั้งค่า Supabase Authentication ให้รองรับโดเมนเว็บไซต์ที่ใช้งาน (Site URL / Redirect URLs เมื่อมี OAuth หรืออีเมลลิงก์) และจัดการความปลอดภัยของบัญชีเจ้าหน้าที่อย่างเหมาะสม
-7. เปิด `admin.html` → ใส่อีเมลและรหัสผ่านเจ้าหน้าที่ → เพิ่ม/แก้ไข/ลบสินค้า ระบบจะบันทึกลงฐานข้อมูลจริง ข้อมูลที่เปิด `เผยแพร่บนเว็บไซต์` จะแสดงที่ `index.html` สำหรับผู้ชมทุกคน
-
-**สำคัญ:** เมื่อเปิด Supabase จะใช้ข้อมูลจากฐานข้อมูลออนไลน์เท่านั้น ไม่ดึงสินค้า 12 รายการจาก JSON มาเผยแพร่อัตโนมัติ เพื่อป้องกันข้อมูลสาธิตปะปนกับข้อมูลจริง เริ่มเพิ่มรายการผ่านหน้า Admin โดยตรวจสอบข้อมูลและการอนุญาตก่อนทุกครั้ง
-
-### นโยบายสิทธิ์
-
-- ผู้ชมทั่วไปอ่านได้เฉพาะแถว `is_published=true`
-- บัญชีที่อยู่ใน `public.admins` เท่านั้นอ่านทุกแถว เพิ่ม แก้ไข และลบได้
-- ข้อมูลรหัสผ่านใช้ Supabase Authentication ไม่เก็บรหัสผ่านใน GitHub, JavaScript หรือ `products`
-- อัปโหลดรูปภาพเข้าบัคเก็ต public เฉพาะผู้ดูแลระบบ ด้วย Policy ของ Supabase Storage
-- ต้องปฏิบัติตาม PDPA; ก่อนเผยแพร่เบอร์โทร/พิกัดร้านค้า ควรได้รับอนุญาตผู้ประกอบการ
-
-### เกี่ยวกับข้อมูลทดลองและการย้ายข้อมูล
-
-ข้อมูลสาธิตถูกแก้ไขแค่บนเครื่องผู้ใช้ ไม่ sync ไป Cloud โดยอัตโนมัติ หากต้องการนำข้อมูลจริงขึ้นระบบ ให้เพิ่มผ่านหลังบ้านหลังเชื่อม Supabase หรือนำข้อมูลที่ตรวจสอบแล้ว import เข้าฐานข้อมูลแบบมีผู้ดูแล
-
-## Deploy บน GitHub Pages
-
-1. สร้าง repo เช่น `otop-mae-hong-son-2570` แล้วอัปโหลด **เนื้อหาทั้งหมดของโฟลเดอร์โปรเจกต์** ไปยัง root ของ repo
-2. GitHub → `Settings → Pages` → `Source: GitHub Actions`
-3. เมื่อ push เข้า `main` workflow ใน `.github/workflows/pages.yml` จะ deploy เว็บไซต์
-4. เว็บไซต์ `https://USERNAME.github.io/otop-mae-hong-son-2570/`
-5. หลังปรับ `assets/config.js` ตาม Supabase ของหน่วยงาน ให้ commit/push ใหม่เพื่อเปิดใช้โหมดออนไลน์
-
-**สถานะ:** ไฟล์ใน ZIP นี้เป็น source สำหรับ deploy ยังไม่ได้ push ไป GitHub หรือเชื่อม Supabase ให้โดยอัตโนมัติ
-
-## โครงสร้างหลัก
-
+```text
+index.html                 แคตตาล็อกสินค้าและแผนที่
+admin.html                 หน้า Login / Dashboard / Editor
+assets/app.js              ค้นหา แสดงสินค้า แชร์ QR และแผนที่
+assets/admin.js            Login CRUD และสำรองข้อมูล
+assets/shared.js           โหลดสินค้า + Supabase Client + ฟังก์ชันร่วม
+assets/config.js           ข้อมูลเชื่อมต่อ Supabase (เฉพาะ Project URL + publishable/anon key)
+assets/style.css           CSS หน้าเว็บ
+assets/admin.css           CSS หน้า Admin
+assets/images/*.webp       รูปตัวอย่าง WebP
+assets/favicon.svg         ไอคอน
+supabase/setup.sql         สร้างตาราง, Row Level Security, Storage policy
+data/products.json         สินค้าสาธิต 12 รายการ
+deploy/pages.yml.example     ตัวอย่าง GitHub Actions (ไม่เปิดใช้โดยอัตโนมัติ)
 ```
-index.html                  เว็บไซต์ผู้ซื้อ
-admin.html                  หน้าล็อกอินและแดชบอร์ดผู้ดูแล
-assets/app.js               ค้นหา กรองสินค้า แผนที่และรายละเอียด
-assets/admin.js             Login และ CRUD
-assets/admin.css            ดีไซน์หลังบ้าน
-assets/shared.js            การเชื่อมต่อข้อมูล และยูทิลิตีร่วม
-assets/config.js            การตั้งค่า Supabase (ไม่มี secret key)
-data/products.json          ข้อมูลสาธิต
-supabase/setup.sql          SQL + RLS + bucket
-.github/workflows/pages.yml deploy GitHub Pages
+
+## ทดลองในเครื่อง
+
+จากโฟลเดอร์โปรเจกต์:
+
+```bash
+python -m http.server 8080
 ```
+
+- หน้าเว็บ: http://localhost:8080/index.html
+- Admin: http://localhost:8080/admin.html
+- เริ่มต้นตั้งรหัสผ่านทดลองเอง 8 ตัวอักษรขึ้นไป (ไม่ฝังรหัสผ่านไว้ในซอร์ส)
+- ข้อมูลทดลองเก็บใน `localStorage` เฉพาะเบราว์เซอร์ที่แก้ไข **ไม่ใช่ฐานข้อมูลที่เผยแพร่ทั่วโลก**
+
+**ความปลอดภัย:** รหัสผ่านทดลองเป็นเพียงหน้ากั้น UI ในเบราว์เซอร์ และไม่ใช่ระบบ Auth ฝั่งเซิร์ฟเวอร์ ไม่เหมาะใช้จริงกับข้อมูลบุคคล ไม่ควรใส่ข้อมูลที่ไม่สามารถเปิดเผยได้ในโหมดทดลอง
+
+## อัปเดตโปรเจกต์ GitHub ปัจจุบัน
+
+Repository: https://github.com/trakoonintasit-beep/otop-mae-hong-son-2570
+
+**สำคัญ:** ใช้ไฟล์ *ภายใน ZIP* วางที่ **root** ของ repository เดิม ไม่สร้างโฟลเดอร์ครอบใหม่อีก
+
+วิธีง่ายผ่าน Codespaces:
+
+1. ดาวน์โหลด ZIP ของเวอร์ชันนี้ แล้วอัปโหลดไฟล์ ZIP ไปไว้ที่โฟลเดอร์ root ของ Codespaces
+2. เปิด **Terminal** และรันคำสั่งตามด้านล่าง โดยแทน `YOUR_ZIP_FILENAME.zip` ด้วยชื่อไฟล์ที่อัปโหลด
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+unzip -o YOUR_ZIP_FILENAME.zip
+
+git add index.html admin.html assets data supabase README.md .nojekyll .gitignore deploy
+# ตรวจรายการไฟล์ก่อน commit
+git status --short
+git commit -m "Improve OTOP catalog and admin v2.1"
+git push origin main
+```
+
+สำหรับ Repository นี้ให้ใช้ **Settings → Pages → Source: Deploy from a branch → main / (root)** ตามเดิมได้เลย โดยไฟล์ `deploy/pages.yml.example` เป็นตัวอย่างที่ไม่รันอัตโนมัติ หากภายหลังต้องการย้ายไป GitHub Actions ให้เลือก Source: GitHub Actions ก่อน แล้วคัดลอกตัวอย่างเป็น `.github/workflows/pages.yml`
+
+หลังอัปโหลดผ่านแล้ว ตรวจ:
+
+- เว็บไซต์ https://trakoonintasit-beep.github.io/otop-mae-hong-son-2570/
+- Admin https://trakoonintasit-beep.github.io/otop-mae-hong-son-2570/admin.html
+- Settings → Pages และแท็บ Actions ของ repo ว่าการเผยแพร่สำเร็จ
+
+**ไม่ต้องอัปโหลดไฟล์ ZIP เข้า Repository โดยตรงโดยไม่แตกไฟล์** เพราะ Pages จะไม่อ่าน HTML ที่อยู่ใน ZIP
+
+## เปิดใช้ Admin ออนไลน์ด้วย Supabase (งานที่ต้องตั้งค่าเพิ่ม)
+
+GitHub Pages เป็น Static Hosting จึงไม่สามารถเก็บบัญชีผู้ดูแลและเขียนฐานข้อมูลให้ทุกคนเห็นได้ด้วยตัวเอง
+
+1. สร้าง Supabase Project **ภายใต้บัญชีหน่วยงานที่รับผิดชอบ**
+2. Supabase → **SQL Editor** → รัน `supabase/setup.sql` (ตรวจ SQL ก่อนทำกับฐานข้อมูลที่ใช้งานจริง)
+3. Supabase → Authentication → Users → สร้างบัญชีเจ้าหน้าที่ และตั้งรหัสผ่านเฉพาะใน Supabase **ห้ามส่งรหัสผ่านผ่านแชต**
+4. Supabase SQL Editor → รันต่อไปนี้โดยแทนอีเมลที่สร้างจริง:
+
+```sql
+insert into public.admins(user_id)
+select id from auth.users where email = 'REPLACE_WITH_REAL_ADMIN_EMAIL'
+on conflict (user_id) do nothing;
+```
+
+5. เปิด `assets/config.js` แล้วกำหนด **Project URL** และ **publishable/anon key** จาก Supabase:
+
+```js
+window.OTOP_CONFIG = {
+  supabaseUrl: 'https://YOUR_PROJECT.supabase.co',
+  supabaseAnonKey: 'YOUR_PUBLISHABLE_OR_ANON_KEY'
+};
+```
+
+**ห้ามนำ `service_role`, Secret Key, Database Password หรือรหัสผ่านผู้ใช้ไปใส่ในไฟล์นี้หรือ GitHub** เพราะ Repository เป็น Public; Supabase publishable/anon key เปิดเผยได้เมื่อใช้ Row Level Security ถูกต้อง
+
+6. Git commit/push ไฟล์ `assets/config.js` แล้วทดสอบว่า Admin ใช้อีเมล+รหัสผ่านจริง และหน้าเว็บโหลดข้อมูลจากฐานข้อมูลออนไลน์
+7. สร้างรายการสินค้าใหม่ ตรวจข้อมูล และเลือก “เผยแพร่บนเว็บไซต์” สำหรับรายการที่ตรวจสอบแล้วเท่านั้น (ระบบออนไลน์ไม่แสดงข้อมูลสาธิต 12 รายการโดยอัตโนมัติ)
+8. ก่อนเปิดรับข้อมูลจริง แนะนำให้กำหนดรอบทบทวนข้อมูลผู้ผลิต ราคา เบอร์ติดต่อ และพิกัดร้านอย่างน้อยทุกไตรมาส รวมถึงนโยบายลบ/แก้ไขข้อมูลตามคำขอของเจ้าของข้อมูล
+
+## ข้อควรระวังด้านข้อมูลส่วนบุคคล
+
+- เก็บเฉพาะข้อมูลที่จำเป็นและผู้ประกอบการอนุญาตให้เผยแพร่
+- อย่าใส่ที่อยู่บ้านส่วนตัว เบอร์ส่วนตัว หรือพิกัดที่พักอาศัยโดยไม่ได้รับอนุญาต
+- หน้าเว็บและ QR Code แชร์ได้สาธารณะ ดังนั้นทุกข้อมูลที่เลือก `is_published=true` ต้องได้รับการตรวจสอบแล้ว
+- ไฟล์สำรอง JSON อาจมีเบอร์ติดต่อและพิกัด **ห้ามอัปโหลดไฟล์สำรองที่มีข้อมูลส่วนบุคคลขึ้น GitHub Public**
+- `data/products.json` เป็นตัวอย่างเท่านั้น ไม่ใช่ฐานข้อมูลจริงของจังหวัด
+- เมื่อตรวจสอบข้อมูลจริงครบแล้วและพร้อมให้ค้นหาผ่าน Google ให้ลบ `<meta name="robots" content="noindex, nofollow" />` ออกจาก `index.html` (ส่วน `admin.html` ควรคง noindex)
+
+## การทดสอบเบื้องต้น
+
+- การแสดงสินค้า 12 รายการ / ปุ่มแสดงเพิ่ม / ค้นหา / ตัวกรอง
+- เปิดหน้า Modal และส่วนแชร์สินค้า
+- โหมด Admin ทดลอง ตั้งรหัสผ่านและเพิ่มสินค้าแบบฉบับร่าง
+- ไวยากรณ์ JavaScript และการมีอยู่ของไฟล์รูปภาพ
+
+**ยังต้องทดสอบบนโฮสต์จริงหลัง Deploy:** Leaflet/OSM Tile, QR Code จาก CDN, Supabase Login, RLS, Storage Upload, ข้อมูลที่แสดงให้ผู้ใช้ต่างเครื่อง, และการตอบสนองมือถือหลายขนาด

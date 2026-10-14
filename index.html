@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ต้นแบบ OTOP Mae Hong Son Digital Catalog 2570 — ค้นหา ช้อป เที่ยว ถึงที่ในหน้าเดียว" />
+  <title>OTOP Mae Hong Son Digital Catalog 2570</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#catalog">ข้ามไปค้นหาสินค้า</a>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="หน้าแรก OTOP แม่ฮ่องสอน">
+      <span class="brand-mark">OTOP</span>
+      <span><b>MAE HONG SON</b><small>DIGITAL CATALOG 2570</small></span>
+    </a>
+    <nav aria-label="เมนูหลัก">
+      <a href="#catalog">สินค้า</a><a href="#stories">เรื่องราว</a><a href="#map-section">แผนที่ร้านค้า</a><a href="#about">เกี่ยวกับ</a>
+    </nav>
+    <a class="admin-link" href="admin.html">เข้าสู่ระบบเจ้าหน้าที่ ↗</a>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <img class="hero-bg" src="assets/images/hero-mae-hong-son.png" alt="ภาพประกอบภูเขาและหมอกแม่ฮ่องสอน" />
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <p class="eyebrow">OTOP MAE HONG SON · 2570</p>
+        <h1>ค้นหา • ช้อป • เที่ยว<br><span>ถึงที่ในหน้าเดียว</span></h1>
+        <p>ต้นแบบแคตตาล็อกดิจิทัลที่เชื่อมสินค้า ผู้ประกอบการ เรื่องราวชุมชน และพิกัดร้านค้าไว้ในประสบการณ์เดียว</p>
+        <div class="hero-actions"><a class="btn primary" href="#catalog">สำรวจสินค้า</a><a class="btn ghost" href="#map-section">ดูแผนที่ร้านค้า</a></div>
+      </div>
+      <div class="hero-badge"><b id="dataBadgeTitle">ข้อมูลสาธิต</b><span><span id="dataBadge">ราคา ภาพ และพิกัดใช้เพื่อทดลองระบบ</span></span></div>
+    </section>
+
+    <section class="stats" aria-label="ภาพรวมระบบ">
+      <div><b>7</b><span>อำเภอ</span></div><div><b>6</b><span>หมวดสินค้า</span></div><div><b id="totalProducts">12</b><span>รายการในระบบ</span></div><div><b>1</b><span>จุดเชื่อมข้อมูล</span></div>
+    </section>
+
+    <section id="catalog" class="section catalog-section">
+      <div class="section-head"><div><p class="eyebrow dark">THE LOCAL COLLECTION</p><h2>ของดีที่อยากให้คุณค้นพบ</h2><p>ค้นหาจากชื่อสินค้า กลุ่มผู้ผลิต คำสำคัญ หรือพื้นที่</p></div><span id="resultCount" class="result-count">กำลังโหลด...</span></div>
+      <div class="filter-panel">
+        <label class="search-box"><span>ค้นหา</span><input id="searchInput" type="search" placeholder="เช่น ถั่วลายเสือ ผ้าทอ กาแฟ ปาย" /></label>
+        <label><span>หมวดสินค้า</span><select id="categoryFilter"><option value="">ทุกหมวด</option></select></label>
+        <label><span>อำเภอ</span><select id="districtFilter"><option value="">ทุกอำเภอ</option></select></label>
+        <label><span>เรียงลำดับ</span><select id="sortFilter"><option value="featured">สินค้าแนะนำ</option><option value="priceAsc">ราคา: น้อยไปมาก</option><option value="priceDesc">ราคา: มากไปน้อย</option><option value="name">ชื่อสินค้า: ก–ฮ</option></select></label>
+        <button id="clearFilters" class="btn small" type="button">ล้างตัวกรอง</button>
+      </div>
+      <div id="productGrid" class="product-grid" aria-live="polite"></div>
+      <div id="emptyState" class="empty-state" hidden><h3>ยังไม่พบสินค้าที่ตรงกับการค้นหา</h3><p>ลองเปลี่ยนคำค้นหา หมวดสินค้า หรืออำเภอ</p></div>
+    </section>
+
+    <section id="stories" class="section story-section">
+      <div class="story-lead"><p class="eyebrow dark">BEHIND THE CRAFT</p><h2>มากกว่าสินค้า คือเรื่องราวชุมชน</h2><p>แต่ละชิ้นงานสามารถพาผู้ใช้งานไปรู้จักภูมิปัญญา ผู้คน และพื้นที่ที่อยู่เบื้องหลังสินค้าได้</p></div>
+      <div class="story-cards">
+        <article><span>01</span><h3>เรื่องราวที่สร้างมูลค่า</h3><p>บอกที่มา วัตถุดิบ กระบวนการ และความหมายของผลิตภัณฑ์ด้วยข้อมูลที่ผู้ประกอบการยืนยัน</p></article>
+        <article><span>02</span><h3>ค้นพบตามพื้นที่</h3><p>เลือกสินค้าแล้วเชื่อมต่อไปยังอำเภอ ร้านค้า และแหล่งท่องเที่ยวใกล้เคียงได้ในอนาคต</p></article>
+        <article><span>03</span><h3>QR สู่ข้อมูลเดียวกัน</h3><p>นำลิงก์สินค้าไปสร้าง QR สำหรับบรรจุภัณฑ์ ป้ายร้าน งาน OTOP และสื่อประชาสัมพันธ์ได้</p></article>
+      </div>
+    </section>
+
+    <section id="map-section" class="section map-section">
+      <div class="section-head"><div><p class="eyebrow dark">FIND YOUR NEXT STOP</p><h2>จากหน้าจอ สู่หน้าร้าน</h2><p><span id="mapDescription">หมุดทั้งหมดเป็นพิกัดสาธิตระดับอำเภอ ไม่ใช่ตำแหน่งร้านจริง</span></p></div><button id="showAllMarkers" class="btn small" type="button">แสดงทุกหมุด</button></div>
+      <div class="map-layout"><div id="map" role="application" aria-label="แผนที่ร้านค้า OTOP สาธิต"></div><aside id="mapList" class="map-list"></aside></div>
+    </section>
+
+    <section id="about" class="section about-section">
+      <div><p class="eyebrow">LOCAL HEART, DIGITAL CONNECTION</p><h2>ของดีแม่ฮ่องสอน<br>ค้นพบง่ายขึ้น เชื่อมต่อได้จริง</h2></div>
+      <p>แนวคิดนี้มุ่งให้เว็บไซต์เป็นศูนย์กลางข้อมูลระดับจังหวัด ไม่ใช่ Marketplace เต็มรูปแบบในระยะเริ่มต้น ผู้ใช้งานสามารถค้นหา ดูรายละเอียด ติดต่อผู้ขายเมื่อมีข้อมูลจริง และเปิดเส้นทางไปยังร้านค้าได้ โดยทุกข้อมูลควรผ่านการตรวจสอบก่อนเผยแพร่ และต้องได้รับอนุญาตให้เผยแพร่ข้อมูลติดต่อหรือพิกัดร้านค้า</p>
+    </section>
+  </main>
+
+  <footer>
+    <div><b>สำนักงานพัฒนาชุมชนจังหวัดแม่ฮ่องสอน</b><span>OTOP Mae Hong Son Digital Catalog 2570 · เว็บไซต์ OTOP</span></div>
+    <div class="footer-note">ฮ่องสอน ฮอมฮัก Drive to Done</div>
+  </footer>
+
+  <dialog id="productDialog" class="product-dialog">
+    <button class="dialog-close" id="closeDialog" type="button" aria-label="ปิด">×</button>
+    <div id="dialogContent"></div>
+  </dialog>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="assets/config.js"></script>
+  <script src="assets/shared.js"></script>
+  <script src="assets/app.js" defer></script>
+</body>
+</html>

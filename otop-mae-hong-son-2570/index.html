@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#173c33" />
   <meta name="description" content="ต้นแบบ OTOP Mae Hong Son Digital Catalog 2570 — ค้นหา ช้อป เที่ยว ถึงที่ในหน้าเดียว" />
   <title>OTOP Mae Hong Son Digital Catalog 2570</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,6 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="assets/style.css" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
   <a class="skip-link" href="#catalog">ข้ามไปค้นหาสินค้า</a>
@@ -26,7 +29,7 @@
 
   <main>
     <section id="home" class="hero">
-      <img class="hero-bg" src="assets/images/hero-mae-hong-son.png" alt="ภาพประกอบภูเขาและหมอกแม่ฮ่องสอน" />
+      <img class="hero-bg" src="assets/images/hero-mae-hong-son.webp" alt="ภาพประกอบภูเขาและหมอกแม่ฮ่องสอน" />
       <div class="hero-overlay"></div>
       <div class="hero-content">
         <p class="eyebrow">OTOP MAE HONG SON · 2570</p>
@@ -38,19 +41,22 @@
     </section>
 
     <section class="stats" aria-label="ภาพรวมระบบ">
-      <div><b>7</b><span>อำเภอ</span></div><div><b>6</b><span>หมวดสินค้า</span></div><div><b id="totalProducts">12</b><span>รายการในระบบ</span></div><div><b>1</b><span>จุดเชื่อมข้อมูล</span></div>
+      <div><b>7</b><span>อำเภอ</span></div><div><b>5</b><span>หมวดสินค้า</span></div><div><b id="totalProducts">12</b><span>รายการในระบบ</span></div><div class="visitor-stat" title="จำนวนการเปิดดูเว็บไซต์โดยประมาณ นับไม่เกิน 1 ครั้งต่อเบราว์เซอร์ต่อวัน"><b id="visitorCount" aria-live="polite">—</b><span>การเข้าชมเว็บไซต์ <small id="visitStatus">รอเชื่อมตัวนับ</small></span></div>
     </section>
 
     <section id="catalog" class="section catalog-section">
       <div class="section-head"><div><p class="eyebrow dark">THE LOCAL COLLECTION</p><h2>ของดีที่อยากให้คุณค้นพบ</h2><p>ค้นหาจากชื่อสินค้า กลุ่มผู้ผลิต คำสำคัญ หรือพื้นที่</p></div><span id="resultCount" class="result-count">กำลังโหลด...</span></div>
+      <div class="catalog-help"><span>✨ เลือกหมวดสินค้าที่สนใจ หรือพิมพ์คำค้นหาได้เลย</span><span>📍 เลือกอำเภอเพื่อดูสินค้าและหมุดร้านบนแผนที่พร้อมกัน</span></div>
+      <div id="categoryQuickFilters" class="category-quick" role="group" aria-label="เลือกหมวดสินค้าด่วน"></div>
       <div class="filter-panel">
-        <label class="search-box"><span>ค้นหา</span><input id="searchInput" type="search" placeholder="เช่น ถั่วลายเสือ ผ้าทอ กาแฟ ปาย" /></label>
+        <label class="search-box"><span>ค้นหา</span><input id="searchInput" type="search" placeholder="🔎 ค้นหาของดี เช่น ผ้าทอ กาแฟ ถั่วลายเสือ" aria-label="ค้นหาสินค้า OTOP" /></label>
         <label><span>หมวดสินค้า</span><select id="categoryFilter"><option value="">ทุกหมวด</option></select></label>
         <label><span>อำเภอ</span><select id="districtFilter"><option value="">ทุกอำเภอ</option></select></label>
         <label><span>เรียงลำดับ</span><select id="sortFilter"><option value="featured">สินค้าแนะนำ</option><option value="priceAsc">ราคา: น้อยไปมาก</option><option value="priceDesc">ราคา: มากไปน้อย</option><option value="name">ชื่อสินค้า: ก–ฮ</option></select></label>
         <button id="clearFilters" class="btn small" type="button">ล้างตัวกรอง</button>
       </div>
       <div id="productGrid" class="product-grid" aria-live="polite"></div>
+      <div id="loadMoreControls" class="load-more-controls" hidden><button type="button" id="loadMore" class="btn small">แสดงสินค้าเพิ่มเติม ↓</button></div>
       <div id="emptyState" class="empty-state" hidden><h3>ยังไม่พบสินค้าที่ตรงกับการค้นหา</h3><p>ลองเปลี่ยนคำค้นหา หมวดสินค้า หรืออำเภอ</p></div>
     </section>
 
@@ -65,6 +71,7 @@
 
     <section id="map-section" class="section map-section">
       <div class="section-head"><div><p class="eyebrow dark">FIND YOUR NEXT STOP</p><h2>จากหน้าจอ สู่หน้าร้าน</h2><p><span id="mapDescription">หมุดทั้งหมดเป็นพิกัดสาธิตระดับอำเภอ ไม่ใช่ตำแหน่งร้านจริง</span></p></div><button id="showAllMarkers" class="btn small" type="button">แสดงทุกหมุด</button></div>
+      <div class="map-help">📷 กดหมุดเพื่อดู <b>ภาพสินค้าและราคา</b> แล้วเลือก “ดูรายละเอียดสินค้า” ได้ทันที</div>
       <div class="map-layout"><div id="map" role="application" aria-label="แผนที่ร้านค้า OTOP สาธิต"></div><aside id="mapList" class="map-list"></aside></div>
     </section>
 
@@ -74,6 +81,9 @@
     </section>
   </main>
 
+  <nav class="mobile-bottom-nav" aria-label="เมนูทางลัดบนมือถือ">
+    <a href="#home"><span aria-hidden="true">⌂</span>หน้าแรก</a><a href="#catalog"><span aria-hidden="true">▦</span>สินค้า</a><a href="#map-section"><span aria-hidden="true">📍</span>แผนที่</a><a href="admin.html"><span aria-hidden="true">⚙</span>ผู้ดูแล</a>
+  </nav>
   <footer>
     <div><b>สำนักงานพัฒนาชุมชนจังหวัดแม่ฮ่องสอน</b><span>OTOP Mae Hong Son Digital Catalog 2570 · เว็บไซต์ OTOP</span></div>
     <div class="footer-note">ฮ่องสอน ฮอมฮัก Drive to Done</div>
@@ -82,10 +92,17 @@
   <dialog id="productDialog" class="product-dialog">
     <button class="dialog-close" id="closeDialog" type="button" aria-label="ปิด">×</button>
     <div id="dialogContent"></div>
+    <div id="sharePanel" class="share-panel" hidden>
+      <div><strong>แชร์สินค้านี้</strong><p class="muted-share">คัดลอกลิงก์หรือบันทึก QR Code เพื่อนำไปใช้ในสื่อประชาสัมพันธ์</p></div>
+      <div id="productQr" class="product-qr" aria-label="QR Code ลิงก์สินค้า"></div>
+      <div class="share-actions"><button type="button" id="copyProductLink" class="btn small">คัดลอกลิงก์สินค้า</button><button type="button" id="downloadQr" class="btn small">บันทึก QR Code</button></div>
+      <p id="shareStatus" role="status" aria-live="polite" class="muted-share"></p>
+    </div>
   </dialog>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <script src="assets/config.js"></script>
   <script src="assets/shared.js"></script>
   <script src="assets/app.js" defer></script>

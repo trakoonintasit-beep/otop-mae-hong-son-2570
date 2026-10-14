@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>จัดการสินค้า | OTOP Mae Hong Son 2570</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="assets/admin.css">
+</head>
+<body class="admin-body">
+  <header class="admin-topbar">
+    <a href="index.html" class="brand"><span class="brand-mark">OTOP</span><span><b>MAE HONG SON</b><small>CONTENT MANAGEMENT · 2570</small></span></a>
+    <a href="index.html" class="return-link">← กลับหน้าเว็บไซต์</a>
+  </header>
+  <main class="admin-main">
+    <section class="admin-intro">
+      <span class="mini-eyebrow">OFFICE DASHBOARD / พช.แม่ฮ่องสอน</span>
+      <h1>ระบบจัดการสินค้า<span> OTOP</span></h1>
+      <p>เพิ่มสินค้า · แก้ไขข้อมูล · อัปเดตราคา · จัดการพิกัดร้านค้า</p>
+    </section>
+
+    <section id="loginView" class="login-wrap">
+      <div class="login-art" aria-hidden="true"><p>LOCAL PRODUCTS<br>LOCAL PEOPLE</p><div>“ค้นหา • ช้อป • เที่ยว<br>ถึงที่ในหน้าเดียว”</div></div>
+      <div class="login-card">
+        <div class="lock-icon" aria-hidden="true">⌑</div>
+        <p class="mini-eyebrow">ADMIN ACCESS</p><h2 id="loginHeading">เข้าสู่ระบบผู้ดูแล</h2>
+        <p id="loginSubtext" class="muted">ลงชื่อเข้าใช้เพื่อจัดการข้อมูลสินค้า OTOP</p>
+        <div id="demoNotice" class="demo-notice" hidden><b>โหมดทดลองเฉพาะเครื่อง</b><br>รหัสผ่านนี้ใช้ทดสอบในเบราว์เซอร์เท่านั้น ไม่ใช่ระบบล็อกอินที่ปลอดภัยสำหรับเว็บไซต์สาธารณะ และข้อมูลจะไม่ซิงก์กับผู้ใช้อื่น</div>
+        <form id="loginForm" class="admin-form">
+          <label id="emailRow">อีเมลผู้ดูแล<input id="adminEmail" type="email" placeholder="admin@example.go.th" autocomplete="username" /></label>
+          <label>รหัสผ่าน <input id="adminPassword" type="password" minlength="8" required autocomplete="current-password" placeholder="อย่างน้อย 8 ตัวอักษร" /></label>
+          <label id="confirmRow" hidden>ยืนยันรหัสผ่าน<input id="confirmPassword" type="password" autocomplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" /></label>
+          <button class="admin-primary" type="submit" id="loginButton">เข้าสู่ระบบ →</button>
+          <p id="loginError" class="form-error" role="alert" aria-live="polite"></p>
+        </form>
+        <p class="hint">สำหรับการใช้งานจริง กรุณาเชื่อม Supabase และสร้างบัญชีเจ้าหน้าที่ตามคู่มือ</p>
+      </div>
+    </section>
+
+    <section id="dashboardView" class="dashboard" hidden>
+      <div id="modeBanner" class="mode-banner"></div>
+      <div class="dash-toolbar"><div><span class="mini-eyebrow">PRODUCT MANAGEMENT</span><h2>รายการสินค้าทั้งหมด</h2><p id="totalLabel" class="muted"></p></div><div class="dash-buttons"><button id="addProduct" class="admin-primary" type="button">+ เพิ่มสินค้าใหม่</button><button id="logoutButton" class="admin-secondary" type="button">ออกจากระบบ</button></div></div>
+      <div class="admin-summary"><article><small>รายการทั้งหมด</small><b id="statAll">0</b></article><article><small>แสดงบนเว็บไซต์</small><b id="statLive">0</b></article><article><small>สินค้าแนะนำ</small><b id="statFeatured">0</b></article></div>
+      <div class="admin-list-wrap"><div class="list-toolbar"><label class="sr-only" for="adminSearch">ค้นหาสินค้า</label><input id="adminSearch" type="search" placeholder="ค้นหาชื่อสินค้า กลุ่มผู้ผลิต หรืออำเภอ..." /><span id="listCount" class="muted"></span></div><div class="admin-table-scroll"><table class="admin-table"><thead><tr><th>สินค้า</th><th>ประเภท / อำเภอ</th><th>ราคา</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody id="adminProductRows"></tbody></table></div><p id="tableEmpty" class="table-empty" hidden>ไม่พบรายการสินค้า</p></div>
+      <p id="dashboardStatus" class="save-status" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <dialog id="editorDialog" class="editor-dialog"><form id="productForm" class="editor-form">
+    <div class="editor-head"><div><span class="mini-eyebrow">PRODUCT EDITOR</span><h2 id="editorTitle">เพิ่มสินค้า</h2></div><button id="closeEditor" type="button" class="admin-secondary" aria-label="ปิดหน้าต่าง">✕</button></div>
+    <div class="editor-scroll">
+      <div class="field-grid"><label class="full">ชื่อสินค้า *<input name="name" maxlength="160" required placeholder="เช่น ผ้าทอมือแม่ฮ่องสอน" /></label><label>หมวดสินค้า *<select name="category" required></select></label><label>อำเภอ *<select name="district" required></select></label><label>ราคา (บาท) *<input name="price" type="number" min="0" max="10000000" step="0.01" required /></label><label>หน่วยสินค้า *<input name="unit" maxlength="40" required placeholder="ถุง / ผืน / ชิ้น" /></label><label>ชื่อกลุ่ม/ผู้ผลิต *<input name="producer" maxlength="180" required /></label><label>ชื่อร้าน/จุดจำหน่าย *<input name="shop" maxlength="180" required /></label><label class="full">รายละเอียดสินค้า<textarea name="description" rows="3" maxlength="3000"></textarea></label><label class="full">เรื่องราว/ภูมิปัญญาชุมชน<textarea name="story" rows="3" maxlength="3000"></textarea></label><label class="full">ที่อยู่ร้านค้า<input name="address" maxlength="400" /></label><label>ละติจูด<input name="lat" type="number" min="-90" max="90" step="any" placeholder="19.3003" /></label><label>ลองจิจูด<input name="lng" type="number" min="-180" max="180" step="any" placeholder="97.9685" /></label><label>เบอร์โทรที่อนุญาตให้เผยแพร่<input name="phone" type="tel" maxlength="30" /></label><label>LINE URL (https://...)<input name="line" type="url" placeholder="https://line.me/..." /></label><label class="full">Facebook URL (https://...)<input name="facebook" type="url" placeholder="https://facebook.com/..." /></label><label class="full">URL รูปสินค้า (https://... หรือ path ใน assets/images)<input name="image" id="imageUrl" placeholder="assets/images/textile.png" /></label><label class="full">อัปโหลดรูปภาพ (JPEG / PNG / WebP)<input type="file" id="imageUpload" accept="image/png,image/jpeg,image/webp" /><small>โหมดสาธิต: เก็บภาพขนาดย่อในเบราว์เซอร์ / โหมดออนไลน์: อัปโหลดไป Supabase Storage</small></label></div>
+      <div class="checks"><label><input type="checkbox" name="featured" /> สินค้าแนะนำ</label><label><input type="checkbox" name="is_published" checked /> เผยแพร่บนเว็บไซต์</label></div>
+      <div class="form-consent"><label><input id="dataPermission" type="checkbox" required /> ยืนยันว่าข้อมูลติดต่อและพิกัดที่เผยแพร่ได้รับอนุญาตจากผู้ประกอบการแล้ว หรือเป็นข้อมูลสาธิตที่ไม่ได้ระบุตัวบุคคลจริง</label></div>
+    </div>
+    <div class="editor-footer"><button type="button" class="admin-secondary" id="cancelEditor">ยกเลิก</button><button type="submit" class="admin-primary" id="saveProduct">บันทึกสินค้า</button></div>
+    <p id="editorError" class="form-error" role="alert"></p>
+  </form></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/admin.js" defer></script>
+</body>
+</html>

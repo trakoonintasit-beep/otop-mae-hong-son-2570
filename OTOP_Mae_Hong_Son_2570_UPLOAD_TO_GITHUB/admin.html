@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/admin.css">
   <link rel="stylesheet" href="assets/site-editor.css">
+  <link rel="stylesheet" href="assets/drive-media.css">
 </head>
 <body class="admin-body">
   <header class="admin-topbar">
@@ -94,8 +95,8 @@
                 <label>คำอธิบายหน้าปก<textarea data-setting="hero_description" rows="3" maxlength="950"></textarea></label>
                 <label>ข้อความปุ่มดูสินค้า<input data-setting="hero_button_primary" maxlength="100"></label>
                 <label>ข้อความปุ่มดูแผนที่<input data-setting="hero_button_secondary" maxlength="100"></label>
-                <label>ภาพหน้าปกใหม่ (JPG / PNG / WebP)<input id="siteHeroUpload" type="file" accept="image/png,image/jpeg,image/webp"><small>ไม่เกิน 5 MB · แนะนำภาพแนวนอน 1600 × 900 พิกเซลขึ้นไป</small></label>
-                <label>ลิงก์ภาพหน้าปก (สำหรับภาพจากเว็บไซต์/Storage)<input data-setting="hero_image" id="siteHeroUrl" maxlength="900" placeholder="https://... หรือ assets/images/..." autocomplete="off"></label>
+                <label>ภาพหน้าปกใหม่ (JPG / PNG / WebP)<input id="siteHeroUpload" type="file" accept="image/png,image/jpeg,image/webp"><small>รองรับต้นฉบับสูงสุด 15 MB · ระบบแปลงภาพก่อนอัปโหลดขึ้น Google Drive</small></label>
+                <label>ลิงก์ภาพหน้าปก (Google Drive ผ่านระบบ หรือภาพจากเว็บไซต์)<input data-setting="hero_image" id="siteHeroUrl" maxlength="900" placeholder="https://... หรือ assets/images/..." autocomplete="off"></label>
                 <label>คำอธิบายภาพ (สำหรับผู้อ่านหน้าจอ)<input data-setting="hero_image_alt" maxlength="220"></label>
               </div></details>
             <details class="site-section"><summary>02 · การจัดวางและรูปแบบตัวอักษรหน้าปก</summary>
@@ -160,6 +161,13 @@
             <p class="site-preview-hint">เลื่อนดูตัวอย่างได้ทั้งหน้าปก เนื้อหา และข้อความด้านล่าง</p>
           </div>
         </div>
+        <section class="drive-migration" aria-label="เครื่องมือย้ายภาพเดิมไป Google Drive">
+          <h3>☁️ ย้ายรูปภาพเดิมไป Google Drive</h3>
+          <p>สำหรับภาพที่เคยอยู่ใน Supabase Storage และภาพตัวอย่างที่อยู่ใน assets/images เท่านั้น ระบบจะคัดลอกไป Google Drive แล้วเปลี่ยน URL ในฐานข้อมูล โดยไม่ลบต้นฉบับเดิม</p>
+          <button type="button" id="driveCheck" class="admin-secondary">ตรวจสอบการเชื่อมต่อ Google Drive</button>
+          <button type="button" id="driveMigrate" class="admin-primary">ย้ายภาพเดิมที่ใช้อยู่ไป Google Drive</button>
+          <p id="driveMigrationStatus" role="status" aria-live="polite"></p>
+        </section>
       </section>
     </section>
   </main>
@@ -178,7 +186,7 @@
   <dialog id="editorDialog" class="editor-dialog"><form id="productForm" class="editor-form">
     <div class="editor-head"><div><span class="mini-eyebrow">PRODUCT EDITOR</span><h2 id="editorTitle">เพิ่มสินค้า</h2></div><button id="closeEditor" type="button" class="admin-secondary" aria-label="ปิดหน้าต่าง">✕</button></div>
     <div class="editor-scroll">
-      <div class="field-grid"><label class="full">ชื่อสินค้า *<input name="name" maxlength="160" required placeholder="เช่น ผ้าทอมือแม่ฮ่องสอน" /></label><label>หมวดสินค้า *<select name="category" required></select></label><label>อำเภอ *<select name="district" required></select></label><label>ราคา (บาท) *<input name="price" type="number" min="0" max="10000000" step="0.01" required /></label><label>หน่วยสินค้า *<input name="unit" maxlength="40" required placeholder="ถุง / ผืน / ชิ้น" /></label><label>ชื่อกลุ่ม/ผู้ผลิต *<input name="producer" maxlength="180" required /></label><label>ชื่อร้าน/จุดจำหน่าย *<input name="shop" maxlength="180" required /></label><label class="full">รายละเอียดสินค้า<textarea name="description" rows="3" maxlength="3000"></textarea></label><label class="full">เรื่องราว/ภูมิปัญญาชุมชน<textarea name="story" rows="3" maxlength="3000"></textarea></label><label class="full">ที่อยู่ร้านค้า<input name="address" maxlength="400" /></label><label>ละติจูด<input name="lat" type="number" min="-90" max="90" step="any" placeholder="19.3003" /></label><label>ลองจิจูด<input name="lng" type="number" min="-180" max="180" step="any" placeholder="97.9685" /></label><label>เบอร์โทรที่อนุญาตให้เผยแพร่<input name="phone" type="tel" maxlength="30" /></label><label>LINE URL (https://...)<input name="line" type="url" placeholder="https://line.me/..." /></label><label class="full">Facebook URL (https://...)<input name="facebook" type="url" placeholder="https://facebook.com/..." /></label><label class="full">URL รูปสินค้า (https://... หรือ path ใน assets/images)<input name="image" id="imageUrl" placeholder="assets/images/textile.webp" /></label><label class="full">อัปโหลดรูปภาพ (JPEG / PNG / WebP)<input type="file" id="imageUpload" accept="image/png,image/jpeg,image/webp" /><small>โหมดสาธิต: เก็บภาพขนาดย่อในเบราว์เซอร์ / โหมดออนไลน์: อัปโหลดไป Supabase Storage</small></label></div>
+      <div class="field-grid"><label class="full">ชื่อสินค้า *<input name="name" maxlength="160" required placeholder="เช่น ผ้าทอมือแม่ฮ่องสอน" /></label><label>หมวดสินค้า *<select name="category" required></select></label><label>อำเภอ *<select name="district" required></select></label><label>ราคา (บาท) *<input name="price" type="number" min="0" max="10000000" step="0.01" required /></label><label>หน่วยสินค้า *<input name="unit" maxlength="40" required placeholder="ถุง / ผืน / ชิ้น" /></label><label>ชื่อกลุ่ม/ผู้ผลิต *<input name="producer" maxlength="180" required /></label><label>ชื่อร้าน/จุดจำหน่าย *<input name="shop" maxlength="180" required /></label><label class="full">รายละเอียดสินค้า<textarea name="description" rows="3" maxlength="3000"></textarea></label><label class="full">เรื่องราว/ภูมิปัญญาชุมชน<textarea name="story" rows="3" maxlength="3000"></textarea></label><label class="full">ที่อยู่ร้านค้า<input name="address" maxlength="400" /></label><label>ละติจูด<input name="lat" type="number" min="-90" max="90" step="any" placeholder="19.3003" /></label><label>ลองจิจูด<input name="lng" type="number" min="-180" max="180" step="any" placeholder="97.9685" /></label><label>เบอร์โทรที่อนุญาตให้เผยแพร่<input name="phone" type="tel" maxlength="30" /></label><label>LINE URL (https://...)<input name="line" type="url" placeholder="https://line.me/..." /></label><label class="full">Facebook URL (https://...)<input name="facebook" type="url" placeholder="https://facebook.com/..." /></label><label class="full">URL รูปสินค้า (ใช้ลิงก์ที่ระบบอัปโหลดให้อัตโนมัติ หรือ https://...)<input name="image" id="imageUrl" placeholder="assets/images/textile.webp" /></label><label class="full">อัปโหลดรูปภาพ (JPEG / PNG / WebP)<input type="file" id="imageUpload" accept="image/png,image/jpeg,image/webp" /><small>โหมดออนไลน์: ย่อขนาดภาพและเก็บใน Google Drive / โหมดทดลอง: เก็บเฉพาะในเบราว์เซอร์</small></label></div>
       <div class="checks"><label><input type="checkbox" name="featured" /> สินค้าแนะนำ</label><label><input type="checkbox" name="is_published" /> เผยแพร่บนเว็บไซต์ (ค่าเริ่มต้นเป็นฉบับร่าง)</label></div>
       <div class="form-consent"><label><input id="dataPermission" type="checkbox" required /> ยืนยันว่าข้อมูลติดต่อและพิกัดที่เผยแพร่ได้รับอนุญาตจากผู้ประกอบการแล้ว หรือเป็นข้อมูลสาธิตที่ไม่ได้ระบุตัวบุคคลจริง</label></div>
     </div>
@@ -186,6 +194,6 @@
     <p id="editorError" class="form-error" role="alert"></p>
   </form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/admin.js" defer></script><script src="assets/site-settings.js" defer></script><script src="assets/site-settings-admin.js" defer></script>
+  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/drive-media.js"></script><script src="assets/drive-migration.js" defer></script><script src="assets/admin.js" defer></script><script src="assets/site-settings.js" defer></script><script src="assets/site-settings-admin.js" defer></script>
 </body>
 </html>

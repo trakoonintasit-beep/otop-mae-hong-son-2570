@@ -19,7 +19,7 @@ function preview(){
 function imageReset(){if(localImageUrl)URL.revokeObjectURL(localImageUrl);localImageUrl=null;localImage=null;$('#siteHeroUpload').value='';}
 function setLocalFile(file){imageReset();if(!file)return;
  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('รองรับภาพ JPEG, PNG หรือ WebP เท่านั้น');
- if(file.size>5*1024*1024)throw Error('รูปภาพต้องมีขนาดไม่เกิน 5 MB');
+ if(file.size>15*1024*1024)throw Error('ภาพต้นฉบับต้องมีขนาดไม่เกิน 15 MB (ระบบจะย่อขนาดก่อนอัปโหลด)');
  localImage=file;localImageUrl=URL.createObjectURL(file);
 }
 async function loadPublished(){
@@ -45,11 +45,10 @@ async function publish(event){
   if(authErr||!auth?.user)throw Error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
   const content=read();
   if(localImage){
-   const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[localImage.type];
-   const path='website/hero-'+crypto.randomUUID()+'.'+ext;
-   const uploaded=await client.storage.from('product-images').upload(path,localImage,{contentType:localImage.type,upsert:false,cacheControl:'3600'});
-   if(uploaded.error)throw Error('อัปโหลดรูปหน้าปกไม่สำเร็จ: '+uploaded.error.message);
-   content.hero_image=client.storage.from('product-images').getPublicUrl(path).data.publicUrl;
+   if(!window.OTOP_DRIVE)throw Error('ยังไม่ได้โหลดระบบ Google Drive');
+   status('กำลังบีบอัดและอัปโหลดภาพหน้าปกไป Google Drive...');
+   const uploaded=await window.OTOP_DRIVE.upload(localImage,'website');
+   content.hero_image=uploaded.image_url;
   }
   const saved=await client.from('otop_site_settings')
    .update({content,updated_by:auth.user.id,updated_at:new Date().toISOString()})

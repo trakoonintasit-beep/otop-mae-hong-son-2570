@@ -1,0 +1,28 @@
+/* Mae Hong Son / Admin district dashboard and Google Sheets CSV round trip */
+.district-dashboard,.sheets-panel{background:#fffdfa;border:1px solid #e7ddce;border-radius:22px;padding:22px;margin:18px 0;box-shadow:0 4px 22px rgba(35,65,50,.035)}
+.district-dashboard-head,.sheets-main{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.district-dashboard h3,.sheets-panel h3{font-size:1.25rem;margin:3px 0;color:#1b4e3d}.district-dashboard p,.sheets-panel p{margin:3px 0;font-size:.85rem}
+.district-select-label{display:flex;flex-direction:column;gap:6px;font-size:.75rem;font-weight:700;color:#4e6a5c}
+.district-select-label select{min-width:210px;max-width:100%;border:1px solid #c9d6cb;border-radius:12px;background:#fff;padding:10px 12px;font:inherit;color:#1b4e3d}
+.district-filter-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:20px}
+.district-filter-card{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;background:#f8f6f0;border:1px solid #e5e4db;border-radius:16px;cursor:pointer;padding:13px 16px;font:inherit;color:#345548;min-height:106px}
+.district-filter-card strong{font-size:1.75rem;font-weight:850;line-height:1.2;color:#205843}.district-filter-card span{font-size:.83rem;font-weight:750}.district-filter-card small{color:#6b8377;font-size:.73rem}
+.district-filter-card:hover,.district-filter-card:focus-visible{border-color:#33906d;box-shadow:0 0 0 3px #33906d20}
+.district-filter-card.is-selected{background:#e5f1e8;border-color:#267758}
+.district-filter-summary{color:#47715e;margin:13px 0 0!important;font-weight:700}
+.district-group-row td{background:#e6f0e7!important;padding:10px 18px!important;color:#295e46;font-weight:800;font-size:.86rem}
+.district-group-row td span{display:inline-block;margin-right:14px}.district-group-row td b{color:#56816d;font-size:.78rem}
+.sheets-panel{background:#f9fcf8;border-color:#cce0d0}.sheets-actions{display:flex;gap:9px;flex-wrap:wrap}.sheets-actions button{white-space:nowrap}
+.sheets-instructions{margin:16px 0 8px;padding:11px 13px;border-radius:13px;background:#fff;border:1px solid #e1e8df;font-size:.82rem;color:#51665b;line-height:1.8}
+.sheets-instructions summary{cursor:pointer;font-weight:800;color:#325c47}.sheets-instructions p{font-size:.82rem;line-height:1.8;margin:8px 0}
+.sheets-instructions a{color:#1a6c4d;text-decoration:underline}
+#sheetsStatus{color:#4c705b;font-size:.83rem;line-height:1.7}
+.sheet-preview-dialog{border:0;border-radius:24px;width:min(720px,96vw);max-height:89vh;padding:0;box-shadow:0 30px 100px #0a241d80;color:#244f3f;background:#fff}
+.sheet-preview-dialog::backdrop{background:#102b22bb}.sheet-preview-head{padding:20px 24px;border-bottom:1px solid #e9eee8;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.sheet-preview-head h2{font-size:1.4rem;margin:6px 0 0}.sheet-preview-body{padding:18px 24px;overflow-y:auto;max-height:59vh}
+.sheet-preview-rows{display:grid;gap:7px;max-height:245px;overflow:auto;margin:14px 0}
+.sheet-preview-item{border:1px solid #e6ece5;border-radius:11px;background:#fafcf9;padding:10px 12px;display:flex;gap:3px;flex-direction:column;font-size:.86rem}
+.sheet-preview-item span,.sheet-preview-item small{color:#62756a}
+.sheet-consent{display:flex;align-items:flex-start;gap:10px;font-size:.82rem;line-height:1.7;font-weight:650;margin:18px 0}.sheet-consent input{margin-top:5px}
+#sheetPreviewError{color:#a53031;font-size:.84rem;font-weight:750}.sheet-preview-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 24px;border-top:1px solid #e9eee8;flex-wrap:wrap}
+@media(max-width:900px){.district-filter-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:550px){.district-dashboard,.sheets-panel{padding:15px}.district-filter-cards{gap:7px}.district-filter-card{min-height:94px;padding:11px}.district-filter-card strong{font-size:1.45rem}.sheets-actions{width:100%}.sheets-actions button{flex:1 1 100%}.district-select-label,.district-select-label select{width:100%}.sheet-preview-footer button{flex:1}}

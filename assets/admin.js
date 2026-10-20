@@ -195,16 +195,14 @@ function collectForm(){
   };
 }
 async function uploadedImage(file){
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('อนุญาตเฉพาะ JPEG, PNG และ WebP');
-  if(file.size>5*1024*1024)throw new Error('รูปภาพต้องไม่เกิน 5 MB');
   if(A.configured){
-    const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-    const filePath=`products/${crypto.randomUUID()}.${ext}`;
-    const {error}=await A.client().storage.from('product-images').upload(filePath,file,{contentType:file.type,upsert:false});
-    if(error)throw error;
-    return A.client().storage.from('product-images').getPublicUrl(filePath).data.publicUrl;
+    if(!window.OTOP_DRIVE)throw new Error('ยังไม่ได้โหลดระบบ Google Drive กรุณารีเฟรชหน้า Admin');
+    const data=await window.OTOP_DRIVE.upload(file,'products');
+    return data.image_url;
   }
-  // Local demo only: resize and compress to avoid browser storage quota.
+  // Demo stays local to the current browser. No real Google upload without authentication.
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('อนุญาตเฉพาะ JPEG, PNG และ WebP');
+  if(file.size>5*1024*1024)throw new Error('ภาพทดลองต้องมีขนาดไม่เกิน 5 MB');
   const bitmap=await createImageBitmap(file);
   const scale=Math.min(1,840/Math.max(bitmap.width,bitmap.height));
   const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);

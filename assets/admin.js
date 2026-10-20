@@ -1,11 +1,20 @@
 'use strict';
 const A=window.OTOP;const $=s=>document.querySelector(s);
 let records=[];let editingId=null;let busy=false;let signedIn=false;
+let currentRole='sub_admin';let accountRows=[];let activeResetUser=null;
+const SUB_ACCOUNT_SUFFIX='@accounts.otop-admin.example.com';
 const SESSION_KEY='otop_mhs_2570_demo_session';
 const setError=(id,msg)=>$(id).textContent=msg||'';
 
 async function initAdmin(){
   $('#loginForm').addEventListener('submit',login);
+  $('#tabProducts').addEventListener('click',()=>switchAdminTab('products'));
+  $('#tabAccounts').addEventListener('click',()=>switchAdminTab('accounts'));
+  $('#createAccountForm').addEventListener('submit',createSubAdmin);
+  $('#refreshAccounts').addEventListener('click',refreshSubAdmins);
+  $('#accountRows').addEventListener('click',handleAccountActions);
+  $('#resetPasswordForm').addEventListener('submit',resetSubAdminPassword);
+  $('#closeResetPassword').addEventListener('click',()=>$('#resetPasswordDialog').close());
   $('#logoutButton').addEventListener('click',logout);
   $('#addProduct').addEventListener('click',()=>openEditor());
   $('#exportData').addEventListener('click',exportData);
@@ -44,9 +53,15 @@ async function initAdmin(){
 }
 async function isAdministrator(user){
   if(!user)return false;
-  const {data,error}=await A.client().from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
+  let {data,error}=await A.client().from('admins').select('user_id, role, is_active').eq('user_id',user.id).maybeSingle();
+  // Before migration, allow an existing admin to continue using the product editor,
+  // but do not grant the master role until the migration is explicitly completed.
+  if(error && (error.code==='42703' || error.message?.includes('does not exist'))){
+    const old=await A.client().from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
+    data=old.data;error=old.error;currentRole='sub_admin';
+  }else currentRole=data?.role==='master_admin'?'master_admin':'sub_admin';
   if(error)throw error;
-  return !!data;
+  return !!data && data.is_active!==false;
 }
 async function login(e){
   e.preventDefault();if(busy)return;
@@ -55,7 +70,10 @@ async function login(e){
     const password=$('#adminPassword').value;
     if(password.length<8)throw new Error('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร');
     if(A.configured){
-      const email=$('#adminEmail').value.trim();if(!email)throw new Error('กรุณากรอกอีเมล');
+      const identifier=$('#adminEmail').value.trim().toLowerCase();
+      if(!identifier)throw new Error('กรุณากรอกอีเมล หรือ Username');
+      if(!identifier.includes('@')&&!/^[a-z][a-z0-9_.-]{3,23}$/.test(identifier))throw new Error('Username ต้องเป็นภาษาอังกฤษ 4–24 ตัวอักษร');
+      const email=identifier.includes('@')?identifier:identifier+SUB_ACCOUNT_SUFFIX;
       const {data,error}=await A.client().auth.signInWithPassword({email,password});
       if(error)throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
       if(!await isAdministrator(data.user)){
@@ -83,13 +101,15 @@ async function showDashboard(){
   signedIn=true;
   $('#loginView').hidden=true;$('#dashboardView').hidden=false;
   $('#importDemo').hidden=A.configured;
+  $('#adminTabs').hidden=!A.configured||currentRole!=='master_admin';
+  switchAdminTab('products');
   $('#modeBanner').innerHTML=A.configured?'<b>ระบบออนไลน์</b> – เข้าสู่ระบบผ่าน Supabase Auth และควบคุมสิทธิ์โดย Row Level Security':'<b>โหมดสาธิตเฉพาะเครื่อง</b> – เพิ่ม/แก้ไข/ลบในเบราว์เซอร์นี้เท่านั้น ไม่มีการแก้ไขข้อมูลบนเว็บของผู้ใช้อื่น และรหัสผ่านนี้ไม่ใช่การป้องกันฝั่งเซิร์ฟเวอร์';
   await refreshRecords();
 }
 async function logout(){
   if(A.configured)await A.client().auth.signOut();
   else sessionStorage.removeItem(SESSION_KEY);
-  signedIn=false;records=[];
+  signedIn=false;records=[];currentRole='sub_admin';switchAdminTab('products');
   $('#dashboardView').hidden=true;$('#loginView').hidden=false;
   if(!A.configured){
     $('#confirmRow').hidden=true;$('#loginHeading').textContent='เข้าสู่ระบบสาธิต';
@@ -246,4 +266,101 @@ async function importDemo(e){
   }catch(err){setError('#dashboardStatus','นำเข้าไม่ได้: '+(err.message||err));}
   finally{input.value='';}
 }
+
+// Master-only access: visible menus are for usability. The database and Edge Function
+// make the actual access-control decision independently on the server.
+function switchAdminTab(which){
+  const master=A.configured&&signedIn&&currentRole==='master_admin';
+  const accounts=which==='accounts'&&master;
+  document.querySelectorAll('.product-pane').forEach(el=>{el.hidden=accounts;});
+  $('#accountsPanel').hidden=!accounts;
+  $('#tabProducts').classList.toggle('is-active',!accounts);
+  $('#tabAccounts').classList.toggle('is-active',accounts);
+  if(accounts)refreshSubAdmins();
+}
+function checkStrongPassword(password){
+  if(password.length<12||password.length>128||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password))
+    throw new Error('รหัสผ่านต้องมี 12–128 ตัวอักษร และประกอบด้วยตัวอักษรภาษาอังกฤษกับตัวเลข');
+}
+async function adminOperation(body){
+  if(!A.configured||!signedIn||currentRole!=='master_admin')throw new Error('เฉพาะ Admin หลักเท่านั้นที่จัดการบัญชีได้');
+  const {data,error}=await A.client().functions.invoke('manage-otop-admins',{body});
+  if(error){
+    let detail='ไม่สามารถติดต่อระบบจัดการ Admin';
+    try{detail=(await error.context?.json())?.error||detail;}catch{}
+    throw new Error(detail);
+  }
+  if(!data?.ok)throw new Error(data?.error||'ดำเนินการไม่สำเร็จ');
+  return data;
+}
+async function createSubAdmin(e){
+  e.preventDefault();
+  const form=e.currentTarget;
+  if(!form.reportValidity())return;
+  const display_name=$('#newAdminName').value.trim();
+  const username=$('#newAdminUsername').value.trim().toLowerCase();
+  const password=$('#newAdminPassword').value;
+  const confirmation=$('#newAdminConfirm').value;
+  try{
+    if(!/^[a-z][a-z0-9_.-]{3,23}$/.test(username))throw new Error('Username ไม่ถูกต้อง');
+    if(display_name.length<2||display_name.length>100)throw new Error('โปรดระบุชื่อเจ้าหน้าที่ 2–100 ตัวอักษร');
+    checkStrongPassword(password);
+    if(password!==confirmation)throw new Error('ยืนยันรหัสผ่านไม่ตรงกัน');
+    if(!$('#accountApproval').checked)throw new Error('กรุณายืนยันสิทธิ์การสร้างบัญชี');
+    if(!confirm('ยืนยันสร้าง Admin รองชื่อ '+username+'?\nเจ้าหน้าที่คนนี้จะเพิ่ม แก้ไข และลบข้อมูลสินค้าได้'))return;
+    $('#submitNewAdmin').disabled=true;setError('#accountCreateMessage','กำลังสร้างบัญชี...');
+    await adminOperation({action:'create',username,display_name,password});
+    form.reset();setError('#accountCreateMessage','สร้างบัญชี '+username+' สำเร็จ กรุณาส่ง Username/Password ให้เจ้าหน้าที่ผ่านช่องทางส่วนตัวที่ปลอดภัย');
+    await refreshSubAdmins();
+  }catch(err){setError('#accountCreateMessage','สร้างบัญชีไม่สำเร็จ: '+(err.message||err));}
+  finally{$('#newAdminPassword').value='';$('#newAdminConfirm').value='';$('#submitNewAdmin').disabled=false;}
+}
+async function refreshSubAdmins(){
+  if(!A.configured||currentRole!=='master_admin'||!signedIn)return;
+  $('#accountRows').innerHTML='<p class="muted">กำลังโหลดบัญชี...</p>';
+  try{
+    const data=await adminOperation({action:'list'});
+    accountRows=data.accounts||[];renderSubAdmins();
+  }catch(err){$('#accountRows').innerHTML='<p class="form-error">'+A.esc('โหลดบัญชีไม่สำเร็จ: '+(err.message||err))+'</p>';}
+}
+function renderSubAdmins(){
+  if(!accountRows.length){$('#accountRows').innerHTML='<p class="muted">ยังไม่มีบัญชี Admin รอง</p>';return;}
+  $('#accountRows').innerHTML=accountRows.map(row=>{
+    const id=A.esc(row.user_id),status=row.is_active!==false;
+    return '<article class="account-item"><div><b>'+A.esc(row.display_name||row.username)+'</b><small>Username: '+A.esc(row.username)+'</small><span class="account-status'+(status?'':' is-disabled')+'">'+(status?'เปิดใช้งาน':'ระงับสิทธิ์')+'</span></div><div class="account-actions"><button class="admin-secondary" data-reset-admin="'+id+'" type="button">เปลี่ยนรหัส</button><button class="admin-secondary" data-toggle-admin="'+id+'" type="button">'+(status?'ปิดสิทธิ์':'เปิดสิทธิ์')+'</button></div></article>';
+  }).join('');
+}
+async function handleAccountActions(e){
+  const reset=e.target.closest('[data-reset-admin]');
+  if(reset){
+    const row=accountRows.find(r=>r.user_id===reset.dataset.resetAdmin);if(!row)return;
+    activeResetUser=row.user_id;$('#resetAccountName').textContent='บัญชี: '+row.username;
+    $('#resetPasswordForm').reset();setError('#resetPasswordError','');$('#resetPasswordDialog').showModal();return;
+  }
+  const toggle=e.target.closest('[data-toggle-admin]');if(!toggle)return;
+  const row=accountRows.find(r=>r.user_id===toggle.dataset.toggleAdmin);if(!row)return;
+  const enable=row.is_active===false;
+  if(!confirm((enable?'เปิดสิทธิ์':'ระงับสิทธิ์')+' Admin รอง '+row.username+' ใช่หรือไม่?'))return;
+  toggle.disabled=true;
+  try{
+    await adminOperation({action:'set_status',user_id:row.user_id,is_active:enable});
+    setError('#accountActionMessage','เปลี่ยนสถานะบัญชี '+row.username+' เรียบร้อย');await refreshSubAdmins();
+  }catch(err){setError('#accountActionMessage','เปลี่ยนสถานะไม่สำเร็จ: '+(err.message||err));}
+  finally{toggle.disabled=false;}
+}
+async function resetSubAdminPassword(e){
+  e.preventDefault();if(!activeResetUser)return;
+  const password=$('#resetAccountPassword').value;
+  try{
+    checkStrongPassword(password);
+    if(password!==$('#resetAccountConfirm').value)throw new Error('ยืนยันรหัสผ่านไม่ตรงกัน');
+    if(!confirm('ยืนยันเปลี่ยนรหัสผ่านของบัญชีนี้หรือไม่?'))return;
+    $('#saveResetPassword').disabled=true;
+    await adminOperation({action:'reset_password',user_id:activeResetUser,password});
+    $('#resetPasswordDialog').close();$('#resetPasswordForm').reset();activeResetUser=null;
+    setError('#accountActionMessage','เปลี่ยนรหัสผ่านเรียบร้อย โปรดส่งรหัสใหม่อย่างปลอดภัย');
+  }catch(err){setError('#resetPasswordError','เปลี่ยนรหัสผ่านไม่สำเร็จ: '+(err.message||err));}
+  finally{$('#resetAccountPassword').value='';$('#resetAccountConfirm').value='';$('#saveResetPassword').disabled=false;}
+}
+
 document.addEventListener('DOMContentLoaded',initAdmin);

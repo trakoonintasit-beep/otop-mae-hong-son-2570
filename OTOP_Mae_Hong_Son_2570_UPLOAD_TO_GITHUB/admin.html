@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <link rel="stylesheet" href="assets/admin.css">
+  <link rel="stylesheet" href="assets/site-editor.css">
 </head>
 <body class="admin-body">
   <header class="admin-topbar">
@@ -45,6 +46,7 @@
       <nav class="admin-tabs" id="adminTabs" hidden aria-label="เมนูผู้ดูแลระบบ">
         <button type="button" id="tabProducts" class="admin-tab is-active" aria-current="page">📦 จัดการสินค้า</button>
         <button type="button" id="tabAccounts" class="admin-tab">👥 จัดการ Admin รอง</button>
+        <button type="button" id="tabSite" class="admin-tab">🎨 จัดการหน้าเว็บไซต์</button>
       </nav>
       <div class="dash-toolbar product-pane"><div><span class="mini-eyebrow">PRODUCT MANAGEMENT</span><h2>รายการสินค้าทั้งหมด</h2><p id="totalLabel" class="muted"></p></div><div class="dash-buttons"><button id="exportData" type="button" class="admin-secondary" title="สำรองข้อมูลเป็นไฟล์ JSON">↓ สำรองข้อมูล</button><button id="importDemo" type="button" class="admin-secondary" title="นำเข้าข้อมูล JSON ในโหมดทดลองเท่านั้น" hidden>↑ นำเข้าข้อมูล</button><input id="importDemoFile" type="file" accept="application/json,.json" hidden><button id="addProduct" class="admin-primary" type="button">+ เพิ่มสินค้าใหม่</button><button id="logoutButton" class="admin-secondary" type="button">ออกจากระบบ</button></div></div>
       <div class="admin-summary product-pane"><article><small>รายการทั้งหมด</small><b id="statAll">0</b></article><article><small>แสดงบนเว็บไซต์</small><b id="statLive">0</b></article><article><small>สินค้าแนะนำ</small><b id="statFeatured">0</b></article></div>
@@ -75,6 +77,90 @@
         </div>
         <p class="account-note">ข้อกำหนด: ต้องติดตั้ง SQL และ Edge Function ชื่อ <code>manage-otop-admins</code> ใน Supabase ก่อนเปิดใช้งานจริง หากยังเป็นโหมดทดลอง จะไม่สามารถสร้างบัญชีเจ้าหน้าที่จริงได้</p>
       </section>
+      <section id="siteEditorPanel" class="site-editor-panel" hidden aria-labelledby="siteEditorTitle">
+        <div class="site-editor-head">
+          <div><span class="mini-eyebrow">WEBSITE APPEARANCE & CONTENT</span><h2 id="siteEditorTitle">🎨 จัดการหน้าเว็บไซต์</h2>
+          <p class="muted">แก้ภาพหน้าปก ข้อความ การจัดตำแหน่ง ฟอนต์ และส่วนท้าย โดยดูผลก่อนเผยแพร่</p></div>
+          <span class="admin-role-tag">Admin หลัก</span>
+        </div>
+        <div id="siteEditorNotice" class="demo-notice" hidden>ต้องติดตั้งฐานข้อมูล site settings ก่อนบันทึกออนไลน์</div>
+        <div class="site-editor-layout">
+          <form id="siteSettingsForm" class="site-form">
+            <details open class="site-section"><summary>01 · ภาพหน้าปกและข้อความหลัก</summary>
+              <div class="site-fields">
+                <label>ข้อความเล็กเหนือหัวเรื่อง<input data-setting="hero_eyebrow" maxlength="220"></label>
+                <label>หัวเรื่องบรรทัดที่ 1<input data-setting="hero_title_top" maxlength="220"></label>
+                <label>หัวเรื่องบรรทัดที่ 2 (ตัวเน้นสี)<input data-setting="hero_title_bottom" maxlength="220"></label>
+                <label>คำอธิบายหน้าปก<textarea data-setting="hero_description" rows="3" maxlength="950"></textarea></label>
+                <label>ข้อความปุ่มดูสินค้า<input data-setting="hero_button_primary" maxlength="100"></label>
+                <label>ข้อความปุ่มดูแผนที่<input data-setting="hero_button_secondary" maxlength="100"></label>
+                <label>ภาพหน้าปกใหม่ (JPG / PNG / WebP)<input id="siteHeroUpload" type="file" accept="image/png,image/jpeg,image/webp"><small>ไม่เกิน 5 MB · แนะนำภาพแนวนอน 1600 × 900 พิกเซลขึ้นไป</small></label>
+                <label>ลิงก์ภาพหน้าปก (สำหรับภาพจากเว็บไซต์/Storage)<input data-setting="hero_image" id="siteHeroUrl" maxlength="900" placeholder="https://... หรือ assets/images/..." autocomplete="off"></label>
+                <label>คำอธิบายภาพ (สำหรับผู้อ่านหน้าจอ)<input data-setting="hero_image_alt" maxlength="220"></label>
+              </div></details>
+            <details class="site-section"><summary>02 · การจัดวางและรูปแบบตัวอักษรหน้าปก</summary>
+              <div class="site-fields site-fields-two">
+                <label>ตำแหน่งข้อความแนวนอน<select data-setting="hero_align"><option value="left">ชิดซ้าย</option><option value="center">กึ่งกลาง</option><option value="right">ชิดขวา</option></select></label>
+                <label>ตำแหน่งข้อความแนวตั้ง<select data-setting="hero_vertical"><option value="top">ด้านบน</option><option value="center">กึ่งกลาง</option><option value="bottom">ด้านล่าง</option></select></label>
+                <label>ขนาดหัวเรื่องบนจอคอมพิวเตอร์ (px)<input data-setting="hero_title_size" type="range" min="42" max="106" step="2"><output data-output="hero_title_size"></output></label>
+                <label>ระยะห่างบรรทัด<input data-setting="hero_line_height" type="range" min="0.9" max="1.5" step="0.05"><output data-output="hero_line_height"></output></label>
+                <label>ความสูงหน้าปก (px)<input data-setting="hero_height" type="range" min="460" max="800" step="20"><output data-output="hero_height"></output></label>
+                <label>ความเข้มพื้นมืดทับภาพ<input data-setting="hero_overlay_opacity" type="range" min="35" max="95" step="5"><output data-output="hero_overlay_opacity"></output></label>
+                <label>เลื่อนตำแหน่งภาพขึ้น/ลง (%)<input data-setting="hero_image_position" type="range" min="0" max="100" step="5"><output data-output="hero_image_position"></output></label>
+                <label>สีข้อความหน้าปก<input data-setting="hero_text_color" type="color"></label>
+                <label>สีหัวเรื่องบรรทัดเน้น<input data-setting="hero_accent_color" type="color"></label>
+              </div></details>
+            <details class="site-section"><summary>03 · เมนูบนเว็บไซต์และชื่อส่วนต่าง ๆ</summary>
+              <div class="site-fields">
+                <label>ข้อความใต้โลโก้ OTOP<input data-setting="brand_subtitle"></label>
+                <div class="site-fields site-fields-two">
+                  <label>เมนูสินค้า<input data-setting="nav_catalog"></label>
+                  <label>เมนูเรื่องราว<input data-setting="nav_stories"></label>
+                  <label>เมนูแผนที่<input data-setting="nav_map"></label>
+                  <label>เมนูเกี่ยวกับ<input data-setting="nav_about"></label>
+                </div>
+                <label>ข้อความเล็กเหนือหมวดสินค้า<input data-setting="catalog_eyebrow"></label>
+                <label>หัวข้อหมวดสินค้า<input data-setting="catalog_title"></label>
+                <label>คำอธิบายหมวดสินค้า<input data-setting="catalog_description"></label>
+                <label>หัวข้อย่อยเรื่องราว<input data-setting="story_eyebrow"></label>
+                <label>ชื่อส่วนเรื่องราว<input data-setting="story_title"></label>
+                <label>คำอธิบายส่วนเรื่องราว<textarea data-setting="story_description" rows="2"></textarea></label>
+                <div class="site-fields site-fields-two">
+                  <label>หัวข้อเรื่องราว 1<input data-setting="story_1_title"></label><label>คำอธิบาย 1<textarea data-setting="story_1_text" rows="2"></textarea></label>
+                  <label>หัวข้อเรื่องราว 2<input data-setting="story_2_title"></label><label>คำอธิบาย 2<textarea data-setting="story_2_text" rows="2"></textarea></label>
+                  <label>หัวข้อเรื่องราว 3<input data-setting="story_3_title"></label><label>คำอธิบาย 3<textarea data-setting="story_3_text" rows="2"></textarea></label>
+                </div>
+                <label>ข้อความเล็กเหนือแผนที่<input data-setting="map_eyebrow"></label>
+                <label>ชื่อส่วนแผนที่<input data-setting="map_title"></label>
+              </div></details>
+            <details class="site-section"><summary>04 · ข้อความส่วนท้าย / เกี่ยวกับโครงการ</summary>
+              <div class="site-fields">
+                <label>คำโปรยส่วนเกี่ยวกับ<input data-setting="about_eyebrow"></label>
+                <label>หัวข้อส่วนเกี่ยวกับ (ขึ้นบรรทัดใหม่ได้)<textarea data-setting="about_title" rows="2"></textarea></label>
+                <label>รายละเอียดส่วนเกี่ยวกับ<textarea data-setting="about_description" rows="4"></textarea></label>
+                <label>ชื่อหน่วยงานด้านล่าง<input data-setting="footer_agency"></label>
+                <label>ข้อความบรรทัดล่างชื่อหน่วยงาน<input data-setting="footer_description"></label>
+                <label>คำขวัญส่วนท้าย<input data-setting="footer_slogan"></label>
+                <div class="site-fields site-fields-two">
+                  <label>สีพื้นส่วนท้าย<input data-setting="footer_bg_color" type="color"></label>
+                  <label>สีข้อความส่วนท้าย<input data-setting="footer_text_color" type="color"></label>
+                </div>
+              </div></details>
+            <div class="site-editor-actions">
+              <button type="button" id="siteRestoreDefaults" class="admin-secondary">คืนค่าข้อความต้นแบบในหน้าตัวอย่าง</button>
+              <button type="button" id="siteReloadPublished" class="admin-secondary">โหลดค่าที่เผยแพร่ใหม่</button>
+              <button type="submit" id="sitePublishButton" class="admin-primary">บันทึกและเผยแพร่เว็บไซต์</button>
+            </div>
+            <p id="siteSaveStatus" class="save-status" aria-live="polite" role="status"></p>
+            <p class="account-note">การแก้ไขในฟอร์มจะแสดงในตัวอย่างก่อน ยังไม่เผยแพร่จนกดบันทึก ระบบจำกัดสิทธิ์บันทึกไว้เฉพาะ Admin หลักผ่านฐานข้อมูล</p>
+          </form>
+          <div class="site-preview-wrap">
+            <div class="site-preview-bar"><b>👁 ตัวอย่างหน้าเว็บไซต์</b><div class="site-preview-actions"><button type="button" data-preview-width="desktop" class="admin-secondary is-selected">คอมพิวเตอร์</button><button type="button" data-preview-width="mobile" class="admin-secondary">มือถือ</button></div></div>
+            <div class="site-preview-scroller"><iframe title="ตัวอย่างหน้าเว็บไซต์ก่อนเผยแพร่" id="sitePreviewFrame" src="./index.html" loading="lazy"></iframe></div>
+            <p class="site-preview-hint">เลื่อนดูตัวอย่างได้ทั้งหน้าปก เนื้อหา และข้อความด้านล่าง</p>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 
@@ -100,6 +186,6 @@
     <p id="editorError" class="form-error" role="alert"></p>
   </form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/admin.js" defer></script>
+  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/admin.js" defer></script><script src="assets/site-settings.js" defer></script><script src="assets/site-settings-admin.js" defer></script>
 </body>
 </html>

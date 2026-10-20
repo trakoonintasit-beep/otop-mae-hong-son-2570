@@ -23,6 +23,7 @@ async function initAdmin(){
   $('#checkAdminConnection').addEventListener('click',checkAdminConnection);
   $('#tabProducts').addEventListener('click',()=>switchAdminTab('products'));
   $('#tabAccounts').addEventListener('click',()=>switchAdminTab('accounts'));
+  $('#tabSite').addEventListener('click',()=>switchAdminTab('site'));
   $('#createAccountForm').addEventListener('submit',createSubAdmin);
   $('#refreshAccounts').addEventListener('click',refreshSubAdmins);
   $('#accountRows').addEventListener('click',handleAccountActions);
@@ -285,11 +286,16 @@ async function importDemo(e){
 function switchAdminTab(which){
   const master=A.configured&&signedIn&&currentRole==='master_admin';
   const accounts=which==='accounts'&&master;
-  document.querySelectorAll('.product-pane').forEach(el=>{el.hidden=accounts;});
+  const site=which==='site'&&master;
+  document.querySelectorAll('.product-pane').forEach(el=>{el.hidden=accounts||site;});
   $('#accountsPanel').hidden=!accounts;
-  $('#tabProducts').classList.toggle('is-active',!accounts);
-  $('#tabAccounts').classList.toggle('is-active',accounts);
+  $('#siteEditorPanel').hidden=!site;
+  for (const [id,enabled] of [['tabProducts',!accounts&&!site],['tabAccounts',accounts],['tabSite',site]]) {
+    const btn=$('#'+id);btn.classList.toggle('is-active',enabled);
+    if(enabled)btn.setAttribute('aria-current','page');else btn.removeAttribute('aria-current');
+  }
   if(accounts)refreshSubAdmins();
+  if(site)window.OTOP_SITE_ADMIN?.activate();
 }
 function checkStrongPassword(password){
   if(password.length<12||password.length>128||!/[A-Za-z]/.test(password)||!/[0-9]/.test(password))

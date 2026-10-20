@@ -1,2 +1,0 @@
-// ตัวอย่างเท่านั้น อย่าใช้ไฟล์นี้เขียนทับ config.js ที่ตั้งค่าไว้แล้ว
-window.OTOP_CONFIG = {supabaseUrl: 'https://YOUR_PROJECT.supabase.co', supabaseAnonKey: 'YOUR_PUBLISHABLE_KEY'};

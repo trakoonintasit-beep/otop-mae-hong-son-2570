@@ -2,6 +2,7 @@
 const A=window.OTOP;const $=s=>document.querySelector(s);
 let records=[];let editingId=null;let busy=false;let signedIn=false;
 let currentRole='sub_admin';let accountRows=[];let activeResetUser=null;
+let activeDistrict='all';
 const SUB_ACCOUNT_SUFFIX='@accounts.otop-admin.example.com';
 const SESSION_KEY='otop_mhs_2570_demo_session';
 const setError=(id,msg)=>$(id).textContent=msg||'';
@@ -39,6 +40,12 @@ async function initAdmin(){
   $('#cancelEditor').addEventListener('click',closeEditor);
   $('#editorDialog').addEventListener('click',e=>{if(e.target===$('#editorDialog'))closeEditor();});
   $('#adminSearch').addEventListener('input',renderRows);
+  $('#adminDistrictFilter').innerHTML='<option value="all">ทุกอำเภอ</option>'+A.DISTRICTS.map(d=>`<option value="${A.esc(d)}">${A.esc(d)}</option>`).join('');
+  $('#adminDistrictFilter').addEventListener('change',e=>{activeDistrict=e.target.value;renderRows();});
+  $('#districtFilterCards').addEventListener('click',e=>{
+    const button=e.target.closest('[data-district]');if(!button)return;
+    activeDistrict=button.dataset.district;$('#adminDistrictFilter').value=activeDistrict;renderRows();
+  });
   $('#productForm').addEventListener('submit',saveProduct);
   $('#adminProductRows').addEventListener('click',async e=>{
     const edit=e.target.closest('[data-edit]');if(edit){openEditor(Number(edit.dataset.edit));return;}
@@ -123,7 +130,7 @@ async function showDashboard(){
 async function logout(){
   if(A.configured)await A.client().auth.signOut();
   else sessionStorage.removeItem(SESSION_KEY);
-  signedIn=false;records=[];currentRole='sub_admin';switchAdminTab('products');
+  signedIn=false;records=[];currentRole='sub_admin';activeDistrict='all';switchAdminTab('products');
   $('#dashboardView').hidden=true;$('#loginView').hidden=false;
   if(!A.configured){
     $('#confirmRow').hidden=true;$('#loginHeading').textContent='เข้าสู่ระบบสาธิต';
@@ -133,23 +140,50 @@ async function logout(){
 async function refreshRecords(){
   try {
     if(A.configured){
-      const {data,error}=await A.client().from('products').select('*').order('id',{ascending:false});
-      if(error)throw error;
-      records=data||[];
+      const all=[];const pageSize=500;let from=0;
+      while(true){
+        const {data,error}=await A.client().from('products').select('*').order('id',{ascending:false}).range(from,from+pageSize-1);
+        if(error)throw error;
+        all.push(...(data||[]));
+        if(!data||data.length<pageSize)break;
+        from+=pageSize;
+        if(from>=20000)throw new Error('จำนวนสินค้ามากเกินช่วงดึงข้อมูล 20,000 รายการ กรุณาแบ่งข้อมูล');
+      }
+      records=all;
     }else records=await A.allDemoProducts();
     renderRows();
   }catch(e){setError('#dashboardStatus','อ่านรายการสินค้าไม่สำเร็จ: '+e.message);}
 }
 function renderRows(){
   const term=$('#adminSearch').value.trim().toLowerCase();
-  const arr=records.filter(p=>[p.name,p.producer,p.district,p.category,p.shop].join(' ').toLowerCase().includes(term));
+  const selected=A.DISTRICTS.includes(activeDistrict)?activeDistrict:'all';
+  const arr=records.filter(p=>(selected==='all'||p.district===selected)&&
+    [p.name,p.producer,p.district,p.category,p.shop].join(' ').toLowerCase().includes(term));
+  const counts=Object.fromEntries(A.DISTRICTS.map(d=>[d,records.filter(p=>p.district===d).length]));
   $('#statAll').textContent=records.length;
   $('#statLive').textContent=records.filter(p=>p.is_published!==false).length;
   $('#statFeatured').textContent=records.filter(p=>p.featured).length;
-  $('#totalLabel').textContent=`จัดการข้อมูลสินค้า ${records.length} รายการ`;
+  $('#totalLabel').textContent=`จัดการข้อมูลสินค้า ${records.length} รายการ ใน 7 อำเภอ`;
   $('#listCount').textContent=`แสดง ${arr.length} รายการ`;
   $('#tableEmpty').hidden=arr.length>0;
-  $('#adminProductRows').innerHTML=arr.map(p=>`<tr><td><div class="prod-id"><img src="${A.esc(A.imgUrl(p.image))}" alt=""><div><strong>${A.esc(p.name)}</strong><small>${A.esc(p.producer)}</small></div></div></td><td>${A.esc(A.canonicalCategory(p.category))}<small>${A.esc(p.district)}</small></td><td><b>${A.money(p.price)}</b></td><td><span class="state-tag ${p.is_published===false?'draft':'live'}">${p.is_published===false?'ยังไม่เผยแพร่':'เผยแพร่'}</span></td><td><div class="action-buttons"><button type="button" class="edit-btn" data-edit="${Number(p.id)}">แก้ไข</button><button type="button" class="delete-btn" data-delete="${Number(p.id)}">ลบ</button></div></td></tr>`).join('');
+  $('#adminDistrictFilter').value=selected;
+  $('#districtFilterCards').innerHTML=`<button type="button" class="district-filter-card ${selected==='all'?'is-selected':''}" data-district="all" aria-pressed="${selected==='all'}"><span>ทุกอำเภอ</span><strong>${records.length}</strong><small>รายการ</small></button>`+
+    A.DISTRICTS.map(d=>`<button type="button" class="district-filter-card ${selected===d?'is-selected':''}" data-district="${A.esc(d)}" aria-pressed="${selected===d}"><span>อ.${A.esc(d)}</span><strong>${counts[d]}</strong><small>รายการ</small></button>`).join('');
+  $('#districtFilterSummary').textContent=selected==='all'
+    ?`กำลังแสดงทุกอำเภอ · รวม ${arr.length} รายการ${term?' ที่ตรงกับคำค้น':''}`
+    :`อำเภอ${selected} มี ${counts[selected]} รายการ · แสดง ${arr.length} รายการ${term?' ที่ตรงกับคำค้น':''}`;
+  let html='';
+  const districts=selected==='all'?A.DISTRICTS:[selected];
+  for(const district of districts){
+    const rows=arr.filter(p=>p.district===district);
+    if(!rows.length)continue;
+    html+=`<tr class="district-group-row"><td colspan="5"><span>📍 อำเภอ${A.esc(district)}</span><b>${rows.length} รายการ</b></td></tr>`;
+    html+=rows.map(p=>`<tr><td><div class="prod-id"><img src="${A.esc(A.imgUrl(p.image))}" alt=""><div><strong>${A.esc(p.name)}</strong><small>${A.esc(p.producer)}</small></div></div></td><td>${A.esc(A.canonicalCategory(p.category))}<small>อ.${A.esc(p.district)}</small></td><td><b>${A.money(p.price)}</b></td><td><span class="state-tag ${p.is_published===false?'draft':'live'}">${p.is_published===false?'ยังไม่เผยแพร่':'เผยแพร่'}</span></td><td><div class="action-buttons"><button type="button" class="edit-btn" data-edit="${Number(p.id)}">แก้ไข</button><button type="button" class="delete-btn" data-delete="${Number(p.id)}">ลบ</button></div></td></tr>`).join('');
+  }
+  const other=selected==='all'?arr.filter(p=>!A.DISTRICTS.includes(p.district)):[];
+  if(other.length){html+=`<tr class="district-group-row"><td colspan="5"><span>⚠️ ไม่ระบุอำเภอที่ถูกต้อง</span><b>${other.length} รายการ</b></td></tr>`;
+    html+=other.map(p=>`<tr><td><div class="prod-id"><img src="${A.esc(A.imgUrl(p.image))}" alt=""><strong>${A.esc(p.name)}</strong></div></td><td>${A.esc(p.category)}<small>${A.esc(p.district)}</small></td><td>${A.money(p.price)}</td><td>ตรวจสอบ</td><td><button class="admin-secondary" type="button" data-edit="${Number(p.id)}">แก้ไข</button></td></tr>`).join('');}
+  $('#adminProductRows').innerHTML=html;
 }
 function openEditor(id=null){
   editingId=id;
@@ -433,4 +467,7 @@ async function resetSubAdminPassword(e){
   finally{$('#resetAccountPassword').value='';$('#resetAccountConfirm').value='';$('#saveResetPassword').disabled=false;}
 }
 
+// Allow the spreadsheet editor to reuse the authenticated product editor without exposing credentials.
+window.OTOP_PRODUCT_ADMIN={getRecords:()=>records.map(r=>({...r})),refresh:refreshRecords,
+  isSignedIn:()=>signedIn,isOnline:()=>A.configured};
 document.addEventListener('DOMContentLoaded',initAdmin);

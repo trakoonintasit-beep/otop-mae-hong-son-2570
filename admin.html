@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="assets/admin.css">
   <link rel="stylesheet" href="assets/site-editor.css">
   <link rel="stylesheet" href="assets/drive-media.css">
+  <link rel="stylesheet" href="assets/district-sheets.css">
 </head>
 <body class="admin-body">
   <header class="admin-topbar">
@@ -51,6 +52,20 @@
       </nav>
       <div class="dash-toolbar product-pane"><div><span class="mini-eyebrow">PRODUCT MANAGEMENT</span><h2>รายการสินค้าทั้งหมด</h2><p id="totalLabel" class="muted"></p></div><div class="dash-buttons"><button id="exportData" type="button" class="admin-secondary" title="สำรองข้อมูลเป็นไฟล์ JSON">↓ สำรองข้อมูล</button><button id="importDemo" type="button" class="admin-secondary" title="นำเข้าข้อมูล JSON ในโหมดทดลองเท่านั้น" hidden>↑ นำเข้าข้อมูล</button><input id="importDemoFile" type="file" accept="application/json,.json" hidden><button id="addProduct" class="admin-primary" type="button">+ เพิ่มสินค้าใหม่</button><button id="logoutButton" class="admin-secondary" type="button">ออกจากระบบ</button></div></div>
       <div class="admin-summary product-pane"><article><small>รายการทั้งหมด</small><b id="statAll">0</b></article><article><small>แสดงบนเว็บไซต์</small><b id="statLive">0</b></article><article><small>สินค้าแนะนำ</small><b id="statFeatured">0</b></article></div>
+      <section class="district-dashboard product-pane" aria-labelledby="districtHeading">
+        <div class="district-dashboard-head">
+          <div><span class="mini-eyebrow">MAE HONG SON · 7 DISTRICTS</span><h3 id="districtHeading">สินค้าแยกตามอำเภอ</h3><p class="muted">คลิกอำเภอเพื่อแสดงสินค้าและแก้ไขข้อมูลเฉพาะพื้นที่</p></div>
+          <label class="district-select-label">เลือกอำเภอ <select id="adminDistrictFilter" aria-label="กรองสินค้าแยกตามอำเภอ"><option value="all">ทุกอำเภอ</option></select></label>
+        </div>
+        <div id="districtFilterCards" class="district-filter-cards" aria-label="เลือกดูสินค้าแต่ละอำเภอ"></div>
+        <p id="districtFilterSummary" class="district-filter-summary" role="status" aria-live="polite"></p>
+      </section>
+      <section class="sheets-panel product-pane" aria-labelledby="sheetHeading">
+        <div class="sheets-main"><div><span class="mini-eyebrow">GOOGLE SHEETS · BULK EDITOR</span><h3 id="sheetHeading">แก้ไขสินค้าหลายรายการผ่าน Google Sheets</h3><p class="muted">ส่งออก CSV → แก้ไขใน Google Sheets → นำเข้าเพื่อตรวจสอบการเปลี่ยนแปลงก่อนบันทึก</p></div>
+        <div class="sheets-actions"><button id="exportSheetCsv" type="button" class="admin-secondary">↓ ส่งออกไฟล์สำหรับ Sheets</button><button id="importSheetCsv" type="button" class="admin-primary">↑ นำเข้า CSV ที่แก้แล้ว</button><input id="sheetCsvFile" type="file" accept=".csv,text/csv" hidden></div></div>
+        <details class="sheets-instructions"><summary>วิธีใช้กับ Google Sheets และข้อควรระวัง</summary><p>นำไฟล์ CSV ที่ดาวน์โหลดไปเปิดใน <a href="https://sheets.google.com" target="_blank" rel="noopener noreferrer">Google Sheets</a> ผ่านเมนู ไฟล์ → นำเข้า → อัปโหลด แก้ไขข้อมูลโดยคงคอลัมน์ <code>id</code> เดิมไว้ แล้วดาวน์โหลดเป็น <strong>ค่าที่คั่นด้วยจุลภาค (.csv)</strong> จาก Google Sheets นำกลับเข้าหน้า Admin เพื่อดูตัวอย่างก่อนยืนยันบันทึก</p><p>ระบบจะอัปเดตเฉพาะสินค้าที่มีรหัสอยู่แล้ว ไม่เพิ่มหรือลบสินค้าอัตโนมัติ และไม่เปลี่ยนลิงก์รูปภาพที่เก็บใน Google Drive แนะนำให้ตั้งสิทธิ์ Google Sheet เป็น <strong>จำกัด (Restricted)</strong> เพราะมีข้อมูลติดต่อ/ที่อยู่ผู้ประกอบการ</p></details>
+        <p id="sheetsStatus" role="status" aria-live="polite"></p>
+      </section>
       <div class="admin-list-wrap product-pane"><div class="list-toolbar"><label class="sr-only" for="adminSearch">ค้นหาสินค้า</label><input id="adminSearch" type="search" placeholder="ค้นหาชื่อสินค้า กลุ่มผู้ผลิต หรืออำเภอ..." /><span id="listCount" class="muted"></span></div><div class="admin-table-scroll"><table class="admin-table"><thead><tr><th>สินค้า</th><th>ประเภท / อำเภอ</th><th>ราคา</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody id="adminProductRows"></tbody></table></div><p id="tableEmpty" class="table-empty" hidden>ไม่พบรายการสินค้า</p></div>
       <p id="dashboardStatus" class="save-status product-pane" role="status" aria-live="polite"></p><p class="export-note product-pane">ข้อมูลที่ส่งออกอาจมีเบอร์โทรหรือพิกัดของผู้ประกอบการ กรุณาจัดเก็บไฟล์สำรองอย่างปลอดภัย และไม่นำขึ้น Repository สาธารณะ</p>
       <section id="accountsPanel" class="accounts-panel" hidden aria-labelledby="accountsTitle">
@@ -172,6 +187,11 @@
     </section>
   </main>
 
+  <dialog id="sheetsPreviewDialog" class="sheet-preview-dialog" aria-labelledby="sheetPreviewTitle">
+    <div class="sheet-preview-head"><div><span class="mini-eyebrow">GOOGLE SHEETS · IMPORT PREVIEW</span><h2 id="sheetPreviewTitle">ตรวจสอบรายการที่จะอัปเดต</h2></div><button id="closeSheetsPreview" type="button" class="admin-secondary" aria-label="ปิด">✕</button></div>
+    <div class="sheet-preview-body"><p id="sheetPreviewSummary"></p><div id="sheetPreviewRows" class="sheet-preview-rows"></div><label class="sheet-consent"><input id="sheetImportConsent" type="checkbox"> ข้าพเจ้ายืนยันว่าข้อมูลที่จะเผยแพร่ รวมถึงข้อมูลติดต่อและพิกัด ได้รับอนุญาตจากผู้ประกอบการแล้ว</label><p id="sheetPreviewError" role="alert"></p></div>
+    <div class="sheet-preview-footer"><button type="button" id="cancelSheetImport" class="admin-secondary">ยกเลิก</button><button type="button" id="applySheetImport" class="admin-primary">ยืนยันบันทึกการเปลี่ยนแปลง</button></div>
+  </dialog>
   <dialog id="resetPasswordDialog" class="editor-dialog account-dialog" aria-labelledby="resetPasswordTitle">
     <form id="resetPasswordForm" class="admin-form account-dialog-form" autocomplete="off">
       <div class="account-heading"><h2 id="resetPasswordTitle">กำหนดรหัสผ่านใหม่</h2><button type="button" id="closeResetPassword" class="admin-secondary">✕</button></div>
@@ -194,6 +214,6 @@
     <p id="editorError" class="form-error" role="alert"></p>
   </form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/drive-media.js"></script><script src="assets/drive-migration.js" defer></script><script src="assets/admin.js" defer></script><script src="assets/site-settings.js" defer></script><script src="assets/site-settings-admin.js" defer></script>
+  <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/drive-media.js"></script><script src="assets/drive-migration.js" defer></script><script src="assets/admin.js" defer></script><script src="assets/sheets-csv.js" defer></script><script src="assets/site-settings.js" defer></script><script src="assets/site-settings-admin.js" defer></script>
 </body>
 </html>

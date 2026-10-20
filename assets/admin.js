@@ -8,6 +8,19 @@ const setError=(id,msg)=>$(id).textContent=msg||'';
 
 async function initAdmin(){
   $('#loginForm').addEventListener('submit',login);
+  // Password visibility is only local to the current input; nothing is stored or retrieved.
+  document.addEventListener('click',e=>{
+    const button=e.target.closest('[data-toggle-password]');
+    if(!button)return;
+    const input=document.getElementById(button.dataset.togglePassword);
+    if(!input)return;
+    const reveal=input.type==='password';
+    input.type=reveal?'text':'password';
+    button.textContent=reveal?'ซ่อน':'แสดง';
+    button.setAttribute('aria-pressed',String(reveal));
+    button.setAttribute('aria-label',reveal?'ซ่อนรหัสผ่าน':'แสดงรหัสผ่าน');
+  });
+  $('#checkAdminConnection').addEventListener('click',checkAdminConnection);
   $('#tabProducts').addEventListener('click',()=>switchAdminTab('products'));
   $('#tabAccounts').addEventListener('click',()=>switchAdminTab('accounts'));
   $('#createAccountForm').addEventListener('submit',createSubAdmin);
@@ -283,15 +296,68 @@ function checkStrongPassword(password){
     throw new Error('รหัสผ่านต้องมี 12–128 ตัวอักษร และประกอบด้วยตัวอักษรภาษาอังกฤษกับตัวเลข');
 }
 async function adminOperation(body){
-  if(!A.configured||!signedIn||currentRole!=='master_admin')throw new Error('เฉพาะ Admin หลักเท่านั้นที่จัดการบัญชีได้');
-  const {data,error}=await A.client().functions.invoke('manage-otop-admins',{body});
-  if(error){
-    let detail='ไม่สามารถติดต่อระบบจัดการ Admin';
-    try{detail=(await error.context?.json())?.error||detail;}catch{}
-    throw new Error(detail);
+  if(!A.configured||!signedIn||currentRole!=='master_admin')
+    throw new Error('เฉพาะ Admin หลักเท่านั้นที่จัดการบัญชีได้');
+
+  // Check the authenticated session before invoking Edge Functions.
+  // Do not expose access tokens or passwords in errors, logs, or localStorage.
+  const {data:auth,error:sessionError}=await A.client().auth.getSession();
+  if(sessionError||!auth?.session?.access_token)
+    throw new Error('เซสชันหมดอายุ กรุณาออกจากระบบและเข้าสู่ระบบใหม่');
+
+  let outcome;
+  try{
+    outcome=await A.client().functions.invoke('manage-otop-admins',{body});
+  }catch(err){
+    throw new Error('ไม่สามารถเชื่อมต่อ Supabase ได้ กรุณาตรวจอินเทอร์เน็ตและ URL ของ Project');
   }
-  if(!data?.ok)throw new Error(data?.error||'ดำเนินการไม่สำเร็จ');
+  const {data,error}=outcome;
+  if(error){
+    const response=error.context;
+    const status=Number(response?.status)||0;
+    let serverMessage='';
+    // Supabase FunctionsHttpError.context is a Response, whereas
+    // FunctionsFetchError/RelayError may carry a native Error.
+    try{
+      if(typeof response?.clone==='function'){
+        const text=await response.clone().text();
+        if(text){
+          let payload;
+          try{payload=JSON.parse(text);}catch{}
+          serverMessage=String(payload?.error||payload?.message||'').slice(0,180);
+        }
+      }
+    }catch{}
+
+    if(status===404 || /not.found|function.not.found/i.test(serverMessage))
+      throw new Error('ไม่พบ Edge Function manage-otop-admins (404) — ต้อง Deploy ฟังก์ชันใน Supabase Project ที่เว็บใช้อยู่');
+    if(status===401)
+      throw new Error('ระบบปฏิเสธการยืนยันตัวตน (401) — ลองออกและเข้าใหม่ และตรวจการตั้งค่า Verify JWT ของ Edge Function');
+    if(status===403)
+      throw new Error(serverMessage==='Origin is not allowed'
+        ? 'โดเมนเว็บไซต์ไม่ได้รับอนุญาต (403) — ตรวจ OTOP_ALLOWED_ORIGINS ของ Edge Function'
+        : 'ไม่ได้รับอนุญาต (403) — ตรวจ role=master_admin และ is_active=true ใน Supabase');
+    if(status===500||status===503)
+      throw new Error('Edge Function เกิดปัญหา ('+status+') — ตรวจ Invocations / Logs ใน Supabase และ SQL migration');
+    if(status===429)
+      throw new Error('มีการเรียกใช้งานมากเกินไป (429) — โปรดรอสักครู่แล้วลองใหม่');
+    if(!status)
+      throw new Error('ติดต่อ Edge Function ไม่สำเร็จ (เครือข่าย/CORS) — ตรวจว่า Deploy แล้ว ใช้ Supabase Project ถูกตัว และอนุญาตโดเมน GitHub Pages');
+    throw new Error('Edge Function ตอบกลับผิดพลาด ('+status+')'+(serverMessage?': '+serverMessage:''));
+  }
+  if(!data?.ok)throw new Error(data?.error||'ระบบจัดการ Admin ไม่ยืนยันผลสำเร็จ');
   return data;
+}
+async function checkAdminConnection(){
+  const button=$('#checkAdminConnection');
+  const output='#accountActionMessage';
+  button.disabled=true;
+  setError(output,'กำลังตรวจสอบการเชื่อมต่อ Edge Function…');
+  try{
+    await adminOperation({action:'list'});
+    setError(output,'✓ เชื่อมต่อสำเร็จ ระบบจัดการ Admin พร้อมใช้งาน');
+  }catch(err){setError(output,'✕ '+(err.message||err));}
+  finally{button.disabled=false;}
 }
 async function createSubAdmin(e){
   e.preventDefault();

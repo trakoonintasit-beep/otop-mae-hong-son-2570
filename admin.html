@@ -31,8 +31,8 @@
         <div id="demoNotice" class="demo-notice" hidden><b>โหมดทดลองเฉพาะเครื่อง</b><br>รหัสผ่านนี้ใช้ทดสอบในเบราว์เซอร์เท่านั้น ไม่ใช่ระบบล็อกอินที่ปลอดภัยสำหรับเว็บไซต์สาธารณะ และข้อมูลจะไม่ซิงก์กับผู้ใช้อื่น</div>
         <form id="loginForm" class="admin-form">
           <label id="emailRow">อีเมล Admin หลัก หรือ Username Admin รอง<input id="adminEmail" type="text" placeholder="admin@example.go.th หรือ otop_pai" autocomplete="username" autocapitalize="off" spellcheck="false" /></label>
-          <label>รหัสผ่าน <input id="adminPassword" type="password" minlength="8" required autocomplete="current-password" placeholder="อย่างน้อย 8 ตัวอักษร" /></label>
-          <label id="confirmRow" hidden>ยืนยันรหัสผ่าน<input id="confirmPassword" type="password" autocomplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" /></label>
+          <label>รหัสผ่าน <span class="password-control"><input id="adminPassword" type="password" minlength="8" required autocomplete="current-password" placeholder="อย่างน้อย 8 ตัวอักษร" /><button type="button" class="toggle-password" data-toggle-password="adminPassword" aria-controls="adminPassword" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
+          <label id="confirmRow" hidden>ยืนยันรหัสผ่าน<span class="password-control"><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" /><button type="button" class="toggle-password" data-toggle-password="confirmPassword" aria-controls="confirmPassword" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
           <button class="admin-primary" type="submit" id="loginButton">เข้าสู่ระบบ →</button>
           <p id="loginError" class="form-error" role="alert" aria-live="polite"></p>
         </form>
@@ -59,8 +59,8 @@
             <form id="createAccountForm" class="admin-form" autocomplete="off">
               <label>ชื่อเจ้าหน้าที่ / ชื่อที่แสดง <input name="display_name" id="newAdminName" maxlength="100" placeholder="เช่น เจ้าหน้าที่พัฒนาชุมชนอำเภอปาย" required></label>
               <label>Username (ภาษาอังกฤษ ตัวเลข _ . -) <input name="username" id="newAdminUsername" minlength="4" maxlength="24" pattern="[a-z][a-z0-9_.\-]{3,23}" placeholder="เช่น otop_pai" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
-              <label>กำหนด Password <input name="password" id="newAdminPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 12 ตัวอักษร มีตัวอักษรและตัวเลข" required></label>
-              <label>ยืนยัน Password <input name="confirm_password" id="newAdminConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+              <label>กำหนด Password <span class="password-control"><input name="password" id="newAdminPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 12 ตัวอักษร มีตัวอักษรและตัวเลข" required><button type="button" class="toggle-password" data-toggle-password="newAdminPassword" aria-controls="newAdminPassword" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
+              <label>ยืนยัน Password <span class="password-control"><input name="confirm_password" id="newAdminConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><button type="button" class="toggle-password" data-toggle-password="newAdminConfirm" aria-controls="newAdminConfirm" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
               <label class="account-checkbox"><input type="checkbox" id="accountApproval" required><span>ตรวจสอบชื่อผู้ใช้และยืนยันว่ามีอำนาจอนุมัติให้เจ้าหน้าที่คนนี้เข้าถึงข้อมูลสินค้า</span></label>
               <button class="admin-primary" id="submitNewAdmin" type="submit">ยืนยันและสร้าง Admin รอง</button>
               <p id="accountCreateMessage" class="form-error" role="status" aria-live="polite"></p>
@@ -68,7 +68,7 @@
             <p class="account-note">ระบบจะไม่แสดงหรือเก็บรหัสผ่านที่สร้างไว้ในฐานข้อมูลสินค้า กรุณาส่งมอบรหัสผ่านให้เจ้าหน้าที่ทางช่องทางส่วนตัวที่ปลอดภัย</p>
           </section>
           <section class="account-card" aria-labelledby="accountListTitle">
-            <div class="account-heading"><h3 id="accountListTitle">บัญชี Admin รองทั้งหมด</h3><button class="admin-secondary" type="button" id="refreshAccounts">↻ รีเฟรช</button></div>
+            <div class="account-heading"><h3 id="accountListTitle">บัญชี Admin รองทั้งหมด</h3><button class="admin-secondary" type="button" id="refreshAccounts">↻ รีเฟรช</button><button class="admin-secondary" type="button" id="checkAdminConnection">ตรวจสอบการเชื่อมต่อ</button></div>
             <div id="accountRows" class="account-rows"><p class="muted">ยังไม่ได้โหลดข้อมูลบัญชี</p></div>
             <p id="accountActionMessage" role="status" class="save-status" aria-live="polite"></p>
           </section>
@@ -82,8 +82,8 @@
     <form id="resetPasswordForm" class="admin-form account-dialog-form" autocomplete="off">
       <div class="account-heading"><h2 id="resetPasswordTitle">กำหนดรหัสผ่านใหม่</h2><button type="button" id="closeResetPassword" class="admin-secondary">✕</button></div>
       <p class="muted" id="resetAccountName"></p>
-      <label>รหัสผ่านใหม่ <input id="resetAccountPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
-      <label>ยืนยันรหัสผ่านใหม่ <input id="resetAccountConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+      <label>รหัสผ่านใหม่ <span class="password-control"><input id="resetAccountPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><button type="button" class="toggle-password" data-toggle-password="resetAccountPassword" aria-controls="resetAccountPassword" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
+      <label>ยืนยันรหัสผ่านใหม่ <span class="password-control"><input id="resetAccountConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><button type="button" class="toggle-password" data-toggle-password="resetAccountConfirm" aria-controls="resetAccountConfirm" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
       <button class="admin-primary" type="submit" id="saveResetPassword">ยืนยันเปลี่ยนรหัสผ่าน</button>
       <p id="resetPasswordError" class="form-error" role="status" aria-live="polite"></p>
     </form>

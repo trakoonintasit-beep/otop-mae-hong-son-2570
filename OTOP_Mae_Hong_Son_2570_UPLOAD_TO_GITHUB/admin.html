@@ -30,7 +30,7 @@
         <p id="loginSubtext" class="muted">ลงชื่อเข้าใช้เพื่อจัดการข้อมูลสินค้า OTOP</p>
         <div id="demoNotice" class="demo-notice" hidden><b>โหมดทดลองเฉพาะเครื่อง</b><br>รหัสผ่านนี้ใช้ทดสอบในเบราว์เซอร์เท่านั้น ไม่ใช่ระบบล็อกอินที่ปลอดภัยสำหรับเว็บไซต์สาธารณะ และข้อมูลจะไม่ซิงก์กับผู้ใช้อื่น</div>
         <form id="loginForm" class="admin-form">
-          <label id="emailRow">อีเมลผู้ดูแล<input id="adminEmail" type="email" placeholder="admin@example.go.th" autocomplete="username" /></label>
+          <label id="emailRow">อีเมล Admin หลัก หรือ Username Admin รอง<input id="adminEmail" type="text" placeholder="admin@example.go.th หรือ otop_pai" autocomplete="username" autocapitalize="off" spellcheck="false" /></label>
           <label>รหัสผ่าน <input id="adminPassword" type="password" minlength="8" required autocomplete="current-password" placeholder="อย่างน้อย 8 ตัวอักษร" /></label>
           <label id="confirmRow" hidden>ยืนยันรหัสผ่าน<input id="confirmPassword" type="password" autocomplete="new-password" placeholder="กรอกรหัสผ่านอีกครั้ง" /></label>
           <button class="admin-primary" type="submit" id="loginButton">เข้าสู่ระบบ →</button>
@@ -42,12 +42,52 @@
 
     <section id="dashboardView" class="dashboard" hidden>
       <div id="modeBanner" class="mode-banner"></div>
-      <div class="dash-toolbar"><div><span class="mini-eyebrow">PRODUCT MANAGEMENT</span><h2>รายการสินค้าทั้งหมด</h2><p id="totalLabel" class="muted"></p></div><div class="dash-buttons"><button id="exportData" type="button" class="admin-secondary" title="สำรองข้อมูลเป็นไฟล์ JSON">↓ สำรองข้อมูล</button><button id="importDemo" type="button" class="admin-secondary" title="นำเข้าข้อมูล JSON ในโหมดทดลองเท่านั้น" hidden>↑ นำเข้าข้อมูล</button><input id="importDemoFile" type="file" accept="application/json,.json" hidden><button id="addProduct" class="admin-primary" type="button">+ เพิ่มสินค้าใหม่</button><button id="logoutButton" class="admin-secondary" type="button">ออกจากระบบ</button></div></div>
-      <div class="admin-summary"><article><small>รายการทั้งหมด</small><b id="statAll">0</b></article><article><small>แสดงบนเว็บไซต์</small><b id="statLive">0</b></article><article><small>สินค้าแนะนำ</small><b id="statFeatured">0</b></article></div>
-      <div class="admin-list-wrap"><div class="list-toolbar"><label class="sr-only" for="adminSearch">ค้นหาสินค้า</label><input id="adminSearch" type="search" placeholder="ค้นหาชื่อสินค้า กลุ่มผู้ผลิต หรืออำเภอ..." /><span id="listCount" class="muted"></span></div><div class="admin-table-scroll"><table class="admin-table"><thead><tr><th>สินค้า</th><th>ประเภท / อำเภอ</th><th>ราคา</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody id="adminProductRows"></tbody></table></div><p id="tableEmpty" class="table-empty" hidden>ไม่พบรายการสินค้า</p></div>
-      <p id="dashboardStatus" class="save-status" role="status" aria-live="polite"></p><p class="export-note">ข้อมูลที่ส่งออกอาจมีเบอร์โทรหรือพิกัดของผู้ประกอบการ กรุณาจัดเก็บไฟล์สำรองอย่างปลอดภัย และไม่นำขึ้น Repository สาธารณะ</p>
+      <nav class="admin-tabs" id="adminTabs" hidden aria-label="เมนูผู้ดูแลระบบ">
+        <button type="button" id="tabProducts" class="admin-tab is-active" aria-current="page">📦 จัดการสินค้า</button>
+        <button type="button" id="tabAccounts" class="admin-tab">👥 จัดการ Admin รอง</button>
+      </nav>
+      <div class="dash-toolbar product-pane"><div><span class="mini-eyebrow">PRODUCT MANAGEMENT</span><h2>รายการสินค้าทั้งหมด</h2><p id="totalLabel" class="muted"></p></div><div class="dash-buttons"><button id="exportData" type="button" class="admin-secondary" title="สำรองข้อมูลเป็นไฟล์ JSON">↓ สำรองข้อมูล</button><button id="importDemo" type="button" class="admin-secondary" title="นำเข้าข้อมูล JSON ในโหมดทดลองเท่านั้น" hidden>↑ นำเข้าข้อมูล</button><input id="importDemoFile" type="file" accept="application/json,.json" hidden><button id="addProduct" class="admin-primary" type="button">+ เพิ่มสินค้าใหม่</button><button id="logoutButton" class="admin-secondary" type="button">ออกจากระบบ</button></div></div>
+      <div class="admin-summary product-pane"><article><small>รายการทั้งหมด</small><b id="statAll">0</b></article><article><small>แสดงบนเว็บไซต์</small><b id="statLive">0</b></article><article><small>สินค้าแนะนำ</small><b id="statFeatured">0</b></article></div>
+      <div class="admin-list-wrap product-pane"><div class="list-toolbar"><label class="sr-only" for="adminSearch">ค้นหาสินค้า</label><input id="adminSearch" type="search" placeholder="ค้นหาชื่อสินค้า กลุ่มผู้ผลิต หรืออำเภอ..." /><span id="listCount" class="muted"></span></div><div class="admin-table-scroll"><table class="admin-table"><thead><tr><th>สินค้า</th><th>ประเภท / อำเภอ</th><th>ราคา</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody id="adminProductRows"></tbody></table></div><p id="tableEmpty" class="table-empty" hidden>ไม่พบรายการสินค้า</p></div>
+      <p id="dashboardStatus" class="save-status product-pane" role="status" aria-live="polite"></p><p class="export-note product-pane">ข้อมูลที่ส่งออกอาจมีเบอร์โทรหรือพิกัดของผู้ประกอบการ กรุณาจัดเก็บไฟล์สำรองอย่างปลอดภัย และไม่นำขึ้น Repository สาธารณะ</p>
+      <section id="accountsPanel" class="accounts-panel" hidden aria-labelledby="accountsTitle">
+        <div class="account-intro"><div><span class="mini-eyebrow">MASTER ADMIN ONLY</span><h2 id="accountsTitle">จัดการบัญชี Admin รอง</h2><p class="muted">เฉพาะ Admin หลักเท่านั้นที่สร้าง รีเซ็ตรหัสผ่าน และเปิด/ปิดสิทธิ์ Admin รองได้</p></div><span class="admin-role-tag">Admin หลัก</span></div>
+        <div class="account-columns">
+          <section class="account-card" aria-labelledby="createAccountTitle">
+            <h3 id="createAccountTitle">➕ สร้างบัญชี Admin รอง</h3>
+            <p class="muted">Admin รองสามารถเพิ่ม แก้ไข และลบสินค้า แต่ไม่สามารถจัดการบัญชีผู้ดูแลคนอื่น</p>
+            <form id="createAccountForm" class="admin-form" autocomplete="off">
+              <label>ชื่อเจ้าหน้าที่ / ชื่อที่แสดง <input name="display_name" id="newAdminName" maxlength="100" placeholder="เช่น เจ้าหน้าที่พัฒนาชุมชนอำเภอปาย" required></label>
+              <label>Username (ภาษาอังกฤษ ตัวเลข _ . -) <input name="username" id="newAdminUsername" minlength="4" maxlength="24" pattern="[a-z][a-z0-9_.\-]{3,23}" placeholder="เช่น otop_pai" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
+              <label>กำหนด Password <input name="password" id="newAdminPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 12 ตัวอักษร มีตัวอักษรและตัวเลข" required></label>
+              <label>ยืนยัน Password <input name="confirm_password" id="newAdminConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+              <label class="account-checkbox"><input type="checkbox" id="accountApproval" required><span>ตรวจสอบชื่อผู้ใช้และยืนยันว่ามีอำนาจอนุมัติให้เจ้าหน้าที่คนนี้เข้าถึงข้อมูลสินค้า</span></label>
+              <button class="admin-primary" id="submitNewAdmin" type="submit">ยืนยันและสร้าง Admin รอง</button>
+              <p id="accountCreateMessage" class="form-error" role="status" aria-live="polite"></p>
+            </form>
+            <p class="account-note">ระบบจะไม่แสดงหรือเก็บรหัสผ่านที่สร้างไว้ในฐานข้อมูลสินค้า กรุณาส่งมอบรหัสผ่านให้เจ้าหน้าที่ทางช่องทางส่วนตัวที่ปลอดภัย</p>
+          </section>
+          <section class="account-card" aria-labelledby="accountListTitle">
+            <div class="account-heading"><h3 id="accountListTitle">บัญชี Admin รองทั้งหมด</h3><button class="admin-secondary" type="button" id="refreshAccounts">↻ รีเฟรช</button></div>
+            <div id="accountRows" class="account-rows"><p class="muted">ยังไม่ได้โหลดข้อมูลบัญชี</p></div>
+            <p id="accountActionMessage" role="status" class="save-status" aria-live="polite"></p>
+          </section>
+        </div>
+        <p class="account-note">ข้อกำหนด: ต้องติดตั้ง SQL และ Edge Function ชื่อ <code>manage-otop-admins</code> ใน Supabase ก่อนเปิดใช้งานจริง หากยังเป็นโหมดทดลอง จะไม่สามารถสร้างบัญชีเจ้าหน้าที่จริงได้</p>
+      </section>
     </section>
   </main>
+
+  <dialog id="resetPasswordDialog" class="editor-dialog account-dialog" aria-labelledby="resetPasswordTitle">
+    <form id="resetPasswordForm" class="admin-form account-dialog-form" autocomplete="off">
+      <div class="account-heading"><h2 id="resetPasswordTitle">กำหนดรหัสผ่านใหม่</h2><button type="button" id="closeResetPassword" class="admin-secondary">✕</button></div>
+      <p class="muted" id="resetAccountName"></p>
+      <label>รหัสผ่านใหม่ <input id="resetAccountPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+      <label>ยืนยันรหัสผ่านใหม่ <input id="resetAccountConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+      <button class="admin-primary" type="submit" id="saveResetPassword">ยืนยันเปลี่ยนรหัสผ่าน</button>
+      <p id="resetPasswordError" class="form-error" role="status" aria-live="polite"></p>
+    </form>
+  </dialog>
 
   <dialog id="editorDialog" class="editor-dialog"><form id="productForm" class="editor-form">
     <div class="editor-head"><div><span class="mini-eyebrow">PRODUCT EDITOR</span><h2 id="editorTitle">เพิ่มสินค้า</h2></div><button id="closeEditor" type="button" class="admin-secondary" aria-label="ปิดหน้าต่าง">✕</button></div>

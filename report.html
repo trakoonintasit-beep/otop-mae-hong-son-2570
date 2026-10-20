@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>One Page รายงานสินค้า | OTOP Mae Hong Son 2570</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/one-page-report.css">
+</head>
+<body>
+<header class="app-header noprint"><a class="back-link" href="admin.html">← กลับหน้า Admin</a><div><strong>OTOP MAE HONG SON</strong><span>ONE PAGE PRODUCT REPORT · v2.7</span></div><a href="index.html" target="_blank" rel="noopener">หน้าเว็บไซต์ ↗</a></header>
+<div id="guard" class="guard noprint"><h1>กำลังตรวจสอบสิทธิ์...</h1><p>กรุณาเข้าสู่ระบบ Admin ก่อนใช้เครื่องมือสร้างรายงาน</p><a href="admin.html">เข้าสู่ระบบ Admin</a></div>
+<main id="reportApp" hidden>
+ <section class="editor-column noprint">
+  <div class="intro"><span class="eyebrow">รายงานสินค้า OTOP</span><h1>สร้าง One Page สินค้า</h1><p>เลือกรายการสินค้า ปรับรูปแบบ เติมข้อมูลประกอบรายงาน แล้วพิมพ์ A4 หรือส่งออก PNG ได้ทันที</p></div>
+  <fieldset class="form-group"><legend>01 · เลือกสินค้า</legend>
+   <label>อำเภอ<select id="districtSelect"><option value="">ทุกอำเภอ</option></select></label>
+   <label>ค้นหาชื่อสินค้า / กลุ่มผู้ผลิต<input id="productSearch" type="search" placeholder="พิมพ์เพื่อค้นหา"></label>
+   <label>สินค้า<select id="productSelect"><option value="">กำลังโหลดสินค้า...</option></select></label>
+   <div class="hint" id="productStatus" aria-live="polite"></div>
+   <p class="small-muted">ข้อมูลสินค้า ราคา ผู้ผลิต ภาพ และช่องทางติดต่อดึงจาก Supabase ส่วนภาพต้นฉบับยังอยู่ Google Drive</p>
+  </fieldset>
+  <fieldset class="form-group"><legend>02 · รูปแบบรายงาน</legend>
+   <label>เทมเพลต<select id="themeSelect"><option value="official">แบบ A · รายงานทางการ</option><option value="showcase">แบบ B · ประชาสัมพันธ์สินค้า</option></select></label>
+   <label>สีหลัก<input id="accentColor" type="color" value="#195445" style="height:44px"></label>
+   <label>คำโปรย / จุดขายหลัก (บรรทัดใต้ชื่อสินค้า)<input id="reportHeadline" maxlength="150" placeholder="เว้นว่างหากไม่มีข้อมูล"></label>
+  </fieldset>
+  <fieldset class="form-group"><legend>03 · ข้อมูลเพิ่มเติมสำหรับ One Page</legend>
+   <p class="small-muted">ข้อมูลส่วนนี้ยังไม่มีในฟอร์มสินค้าเดิม กรอกเฉพาะข้อเท็จจริงที่ตรวจสอบแล้ว ระบบจะแสดง “ไม่ระบุ” สำหรับช่องที่ยังว่าง</p>
+   <div class="two-fields"><label>หมู่บ้าน<input data-extra="village" maxlength="160"></label><label>ตำบล<input data-extra="subdistrict" maxlength="160"></label></div>
+   <label>จุดเด่นสินค้า<textarea data-extra="highlights" rows="2" maxlength="600" placeholder="คุณสมบัติเด่น / จุดขายที่ตรวจสอบแล้ว"></textarea></label>
+   <label>วัตถุดิบ / ส่วนประกอบ<textarea data-extra="ingredients" rows="2" maxlength="600"></textarea></label>
+   <label>กระบวนการผลิต / ภูมิปัญญา<textarea data-extra="process" rows="2" maxlength="600"></textarea></label>
+   <label>ประโยชน์ / คุณค่า<textarea data-extra="benefits" rows="2" maxlength="600"></textarea></label>
+   <label>วิธีใช้ / วิธีบริโภค / การดูแล<textarea data-extra="usage" rows="2" maxlength="600"></textarea></label>
+   <div class="two-fields"><label>ขนาด / น้ำหนัก<input data-extra="size_weight" maxlength="180"></label><label>บรรจุภัณฑ์<input data-extra="packaging" maxlength="180"></label></div>
+   <label>มาตรฐาน / การรับรอง<input data-extra="certifications" maxlength="300" placeholder="กรอกเฉพาะที่มีหลักฐาน"></label>
+   <label>รางวัล / ผลงาน<input data-extra="awards" maxlength="300" placeholder="กรอกเฉพาะที่มีหลักฐาน"></label>
+   <label>ข้อเสนอแนะ / หมายเหตุรายงาน<textarea data-extra="report_note" rows="2" maxlength="600"></textarea></label>
+   <label>ผู้จัดทำรายงาน<input data-extra="reporter" maxlength="180" placeholder="ชื่อเจ้าหน้าที่ (ถ้าต้องการ)"></label>
+  </fieldset>
+  <fieldset class="form-group"><legend>04 · เลือกข้อมูลที่เผยแพร่</legend>
+    <label class="checkbox"><input id="includeContact" type="checkbox"> แสดงเบอร์โทรและช่องทางติดต่อในรายงาน</label>
+    <label class="checkbox"><input id="contactConsent" type="checkbox"> ยืนยันว่าได้รับอนุญาตให้นำข้อมูลติดต่อไปเผยแพร่ในรายงาน</label>
+    <label class="checkbox"><input id="includeQR" type="checkbox" checked> แสดง QR Code เว็บไซต์ OTOP / เส้นทางร้าน</label>
+    <p class="small-muted">พิกัดร้านค้าจะแสดงเฉพาะเมื่อมีข้อมูลจริงและเลือกรวม QR Code; การสร้าง One Page ไม่เปลี่ยนสถานะเผยแพร่สินค้า</p>
+  </fieldset>
+  <div class="actions"><button id="saveExtra" class="btn btn-primary" type="button">บันทึกข้อมูล One Page</button><button id="reloadExtra" class="btn btn-subtle" type="button">โหลดข้อมูลเดิม</button><button id="printReport" class="btn btn-primary" type="button">พิมพ์ / บันทึก PDF</button><button id="savePng" class="btn btn-subtle" type="button">ดาวน์โหลด PNG</button></div>
+  <p class="hint" id="saveStatus" aria-live="polite"></p>
+  <p class="small-muted">PDF: เลือก “บันทึกเป็น PDF” ในหน้าพิมพ์ของเบราว์เซอร์ · PNG: ใช้ภาพความละเอียดสูงและต้องโหลดภาพจาก Google Drive ได้ครบ</p>
+ </section>
+ <section class="preview-column"><div class="preview-toolbar noprint"><strong>ตัวอย่าง One Page · A4 แนวตั้ง</strong><span id="fitStatus">ตรวจพื้นที่หน้า...</span></div><div class="paper-viewport"><article id="reportSheet" class="report-sheet template-official" aria-label="ตัวอย่างรายงานสินค้า One Page"><div class="sheet-stripe"></div><header class="sheet-top"><div class="sheet-unit"><div class="sheet-brand">OTOP</div><div><div class="sheet-agency">สำนักงานพัฒนาชุมชนจังหวัดแม่ฮ่องสอน</div><div class="sheet-code">MAE HONG SON · PRODUCT PROFILE</div></div></div><div class="sheet-index">ข้อมูลสินค้า OTOP<br><b>ONE PAGE REPORT</b></div></header><div class="sheet-title"><span class="sheet-tag">หนึ่งตำบล หนึ่งผลิตภัณฑ์</span><h1 id="rName">เลือกสินค้าเพื่อสร้างรายงาน</h1><p id="rHeadline">รายงานข้อมูลสินค้าและภูมิปัญญาชุมชน</p></div><section class="sheet-feature"><div class="sheet-photo"><img id="rImage" alt="ภาพสินค้าประกอบรายงาน" crossorigin="anonymous"><div class="photo-caption">ภาพประกอบผลิตภัณฑ์</div></div><div class="sheet-keyfacts"><div class="fact-title">ข้อมูลผลิตภัณฑ์</div><div class="fact-row"><small>รหัสสินค้า</small><b id="rId">—</b></div><div class="fact-row"><small>หมวดสินค้า</small><b id="rCategory">—</b></div><div class="fact-row"><small>อำเภอ / จังหวัด</small><b id="rDistrict">—</b></div><div class="fact-row"><small>กลุ่มผู้ผลิต</small><b id="rProducer">—</b></div><div class="fact-row"><small>ราคา / หน่วย</small><b id="rPrice">—</b></div><div class="fact-row"><small>ขนาด / บรรจุภัณฑ์</small><b id="rSize">—</b></div></div></section><section class="sheet-summary"><div class="mini-section"><h2>เรื่องราวและอัตลักษณ์</h2><p id="rStory">—</p></div><div class="mini-section"><h2>รายละเอียดและจุดเด่น</h2><p id="rDescription">—</p><p id="rHighlights"></p></div></section><section class="sheet-columns"><div class="sheet-col"><div class="mini-section"><h2>วัตถุดิบ / ส่วนประกอบ</h2><p id="rIngredients">—</p></div><div class="mini-section"><h2>การผลิต / ภูมิปัญญา</h2><p id="rProcess">—</p></div><div class="mini-section"><h2>ประโยชน์และวิธีใช้</h2><p id="rBenefits">—</p><p id="rUsage"></p></div></div><div class="sheet-col"><div class="mini-section"><h2>มาตรฐาน / รางวัล</h2><p id="rCertifications">—</p><p id="rAwards"></p></div><div class="mini-section"><h2>ผู้ผลิตและจุดจำหน่าย</h2><p id="rLocation">—</p><p id="rShop">—</p><p id="rContact"></p></div><div class="mini-section" id="reportNoteBlock"><h2>ข้อสังเกต</h2><p id="rReportNote">—</p></div></div></section><footer class="sheet-footer"><div><b>OTOP MAE HONG SON DIGITAL CATALOG 2570</b><span id="rPrepared">จัดทำ ณ วันที่ —</span><span id="rStatus">—</span></div><div id="qrWrap" class="sheet-qr"><div id="qrCode"></div><small id="qrLabel">สแกนเพื่อดูข้อมูลเพิ่มเติม</small></div></footer></article></div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js" defer></script>
+<script src="assets/config.js"></script>
+<script src="assets/shared.js"></script>
+<script src="assets/one-page-report.js" defer></script>
+</body>
+</html>

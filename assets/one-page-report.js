@@ -5,11 +5,12 @@
 const $=id=>document.getElementById(id);
 const O=window.OTOP;
 const DISTRICTS=O?.DISTRICTS||['เมืองแม่ฮ่องสอน','ปาย','ปางมะผ้า','ขุนยวม','แม่ลาน้อย','แม่สะเรียง','สบเมย'];
-const ADDITIONAL=['village','subdistrict','highlights','ingredients','process','benefits','usage','size_weight','packaging','certifications','awards','report_note','reporter'];
+const ADDITIONAL=['village','subdistrict','highlights','ingredients','process','benefits','usage','size_weight','packaging','certifications','awards','report_note','reporter','secondary_image_1','secondary_image_2'];
 const NO='ไม่ระบุข้อมูล';
 const SITE='https://trakoonintasit-beep.github.io/otop-mae-hong-son-2570/index.html#catalog';
 let products=[],selected=null,selectedExtra=null,authorizedUser=null,loadedFor=null,working=false,imageReady=false,renderTimer=null;
 let lastQrLink='';
+let officerDistrict=null;
 const escapeHtml=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function getVal(id){return $(id).value.trim();}
 function setStatus(message,isError=false){$('saveStatus').textContent=message;$('saveStatus').classList.toggle('error',!!isError);}
@@ -24,9 +25,11 @@ async function start(){
     const response=await O.client().auth.getUser();
     user=response.data.user;
     if(response.error||!user)throw new Error('ไม่ได้เข้าสู่ระบบ');
-    const member=await O.client().from('admins').select('user_id,role,is_active').eq('user_id',user.id).maybeSingle();
+    const member=await O.client().from('admins').select('user_id,role,is_active,district').eq('user_id',user.id).maybeSingle();
     if(member.error||!member.data||member.data.is_active!==true)throw new Error('บัญชีนี้ไม่มีสิทธิ์ผู้ดูแลที่เปิดใช้งาน');
   }catch(err){return deny('กรุณาเข้าสู่ระบบ Admin ก่อนเข้า One Page ('+(err.message||'เซสชันหมดอายุ')+')');}
+  officerDistrict=member.data.role==='district_officer'?member.data.district:null;
+  if(officerDistrict&&!DISTRICTS.includes(officerDistrict))return deny('บัญชีเจ้าหน้าที่ไม่มีอำเภอที่ได้รับมอบหมาย');
   authorizedUser=user;
   $('guard').hidden=true;$('reportApp').hidden=false;
   await loadProducts();
@@ -37,7 +40,9 @@ async function loadProducts(){
   try{
     const all=[],limit=500;let startAt=0;
     for(;;){
-      const r=await O.client().from('products').select('*').order('id',{ascending:false}).range(startAt,startAt+limit-1);
+      let query=O.client().from('products').select('*');
+      if(officerDistrict)query=query.eq('district',officerDistrict);
+      const r=await query.order('id',{ascending:false}).range(startAt,startAt+limit-1);
       if(r.error)throw r.error;
       all.push(...(r.data||[]));
       if(!r.data||r.data.length<limit)break;
@@ -46,6 +51,7 @@ async function loadProducts(){
     }
     products=all;
     $('districtSelect').innerHTML='<option value="">ทุกอำเภอ</option>'+DISTRICTS.map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+    if(officerDistrict){$('districtSelect').value=officerDistrict;$('districtSelect').disabled=true;}
     const requested=queryId();
     if(requested){const target=products.find(p=>String(p.id)===requested);if(target)$('districtSelect').value=target.district||'';}
     filterProducts(requested);

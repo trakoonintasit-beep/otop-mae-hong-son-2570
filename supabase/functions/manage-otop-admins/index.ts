@@ -17,6 +17,8 @@ type Input = {
   password?: unknown;
   user_id?: unknown;
   is_active?: unknown;
+  role?: unknown;
+  district?: unknown;
 };
 
 Deno.serve(async (req: Request) => {
@@ -67,8 +69,8 @@ Deno.serve(async (req: Request) => {
 
     if (input.action === 'list') {
       const r = await service.from('admins')
-        .select('user_id,username,display_name,role,is_active,created_at')
-        .eq('role', 'sub_admin').order('created_at', { ascending: false });
+        .select('user_id,username,display_name,role,district,is_active,created_at')
+        .in('role', ['sub_admin','district_officer']).order('created_at', { ascending: false });
       if (r.error) throw r.error;
       return json({ ok: true, accounts: r.data ?? [] });
     }
@@ -77,6 +79,10 @@ Deno.serve(async (req: Request) => {
       const username = typeof input.username === 'string' ? input.username.trim().toLowerCase() : '';
       const display_name = typeof input.display_name === 'string' ? input.display_name.trim() : '';
       const password = typeof input.password === 'string' ? input.password : '';
+      const role = input.role === 'district_officer' ? 'district_officer' : 'sub_admin';
+      const districts = ['เมืองแม่ฮ่องสอน','ปาย','ปางมะผ้า','ขุนยวม','แม่ลาน้อย','แม่สะเรียง','สบเมย'];
+      const district = role === 'district_officer' ? String(input.district || '') : null;
+      if (role === 'district_officer' && !districts.includes(district)) return json({ok:false,error:'กรุณาเลือกอำเภอเจ้าหน้าที่ให้ถูกต้อง'},400);
       if (!usernameRe.test(username)) return json({ ok: false, error: 'Username ต้องขึ้นต้นด้วย a-z ความยาว 4–24 ตัวอักษร' }, 400);
       if (display_name.length < 2 || display_name.length > 100)
         return json({ ok: false, error: 'ชื่อเจ้าหน้าที่ต้องมีความยาว 2–100 ตัวอักษร' }, 400);
@@ -96,7 +102,7 @@ Deno.serve(async (req: Request) => {
         return json({ ok: false, error: 'สร้างบัญชีไม่ได้: Username อาจถูกใช้แล้ว หรือรหัสผ่านไม่ผ่านนโยบาย' }, 409);
       const newId = created.data.user.id;
       const inserted = await service.from('admins').insert({
-        user_id: newId, username, display_name, role: 'sub_admin', is_active: true,
+        user_id: newId, username, display_name, role, district, is_active: true,
         created_by: caller.id,
       });
       if (inserted.error) {
@@ -104,7 +110,7 @@ Deno.serve(async (req: Request) => {
         throw inserted.error;
       }
       await service.from('otop_admin_audit').insert({ actor_id: caller.id, target_user_id: newId, action: 'create' });
-      return json({ ok: true, account: { user_id: newId, username, display_name, role: 'sub_admin', is_active: true } }, 201);
+      return json({ ok: true, account: { user_id: newId, username, display_name, role, district, is_active: true } }, 201);
     }
 
     if (input.action === 'set_status' || input.action === 'reset_password') {
@@ -113,12 +119,12 @@ Deno.serve(async (req: Request) => {
       const target = await service.from('admins')
         .select('user_id,role,username,is_active').eq('user_id',targetId).maybeSingle();
       if (target.error) throw target.error;
-      if (!target.data || target.data.role !== 'sub_admin')
+      if (!target.data || !['sub_admin','district_officer'].includes(target.data.role))
         return json({ ok: false, error: 'ไม่พบบัญชี Admin รองที่ต้องการ' }, 404);
 
       if (input.action === 'set_status') {
         if (typeof input.is_active !== 'boolean') return json({ ok: false, error: 'Invalid status' }, 400);
-        const changed = await service.from('admins').update({ is_active: input.is_active }).eq('user_id', targetId).eq('role','sub_admin');
+        const changed = await service.from('admins').update({ is_active: input.is_active }).eq('user_id', targetId).in('role',['sub_admin','district_officer']);
         if (changed.error) throw changed.error;
         await service.from('otop_admin_audit').insert({ actor_id: caller.id, target_user_id: targetId, action: input.is_active ? 'activate' : 'deactivate' });
         return json({ ok: true });

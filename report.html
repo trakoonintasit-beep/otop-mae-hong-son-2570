@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/one-page-report.css">
+<link rel="stylesheet" href="assets/one-page-premium.css">
 </head>
 <body>
 <header class="app-header noprint"><a class="back-link" href="admin.html">← กลับหน้า Admin</a><div><strong>OTOP MAE HONG SON</strong><span>ONE PAGE PRODUCT REPORT · v2.7</span></div><a href="index.html" target="_blank" rel="noopener">หน้าเว็บไซต์ ↗</a></header>
@@ -23,7 +24,7 @@
    <p class="small-muted">ข้อมูลสินค้า ราคา ผู้ผลิต ภาพ และช่องทางติดต่อดึงจาก Supabase ส่วนภาพต้นฉบับยังอยู่ Google Drive</p>
   </fieldset>
   <fieldset class="form-group"><legend>02 · รูปแบบรายงาน</legend>
-   <label>เทมเพลต<select id="themeSelect"><option value="official">แบบ A · รายงานทางการ</option><option value="showcase">แบบ B · ประชาสัมพันธ์สินค้า</option></select></label>
+   <label>เทมเพลต<select id="themeSelect"><option value="official">แบบ A · รายงานทางการ</option><option value="showcase">แบบ B · Premium Storytelling (แนะนำสำหรับขาย)</option></select></label>
    <label>สีหลัก<input id="accentColor" type="color" value="#195445" style="height:44px"></label>
    <label>คำโปรย / จุดขายหลัก (บรรทัดใต้ชื่อสินค้า)<input id="reportHeadline" maxlength="150" placeholder="เว้นว่างหากไม่มีข้อมูล"></label>
   </fieldset>
@@ -36,6 +37,10 @@
    <label>ประโยชน์ / คุณค่า<textarea data-extra="benefits" rows="2" maxlength="600"></textarea></label>
    <label>วิธีใช้ / วิธีบริโภค / การดูแล<textarea data-extra="usage" rows="2" maxlength="600"></textarea></label>
    <div class="two-fields"><label>ขนาด / น้ำหนัก<input data-extra="size_weight" maxlength="180"></label><label>บรรจุภัณฑ์<input data-extra="packaging" maxlength="180"></label></div>
+   <label>ภาพสินค้าเสริม 1 (แกลเลอรี Premium)<input data-extra="secondary_image_1" maxlength="600" placeholder="URL รูปจาก Google Drive"></label>
+   <label>ภาพสินค้าเสริม 2<input data-extra="secondary_image_2" maxlength="600" placeholder="URL รูปจาก Google Drive"></label>
+   <label>อัปโหลดภาพเสริมเข้า Google Drive (เลือกภาพได้ทีละรูป)<input id="premiumUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
+   <button type="button" id="premiumUploadButton" class="btn btn-subtle">อัปโหลดภาพแล้วใส่ในช่องที่ว่าง</button>
    <label>มาตรฐาน / การรับรอง<input data-extra="certifications" maxlength="300" placeholder="กรอกเฉพาะที่มีหลักฐาน"></label>
    <label>รางวัล / ผลงาน<input data-extra="awards" maxlength="300" placeholder="กรอกเฉพาะที่มีหลักฐาน"></label>
    <label>ข้อเสนอแนะ / หมายเหตุรายงาน<textarea data-extra="report_note" rows="2" maxlength="600"></textarea></label>
@@ -58,6 +63,8 @@
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js" defer></script>
 <script src="assets/config.js"></script>
 <script src="assets/shared.js"></script>
+<script src="assets/drive-media.js"></script>
 <script src="assets/one-page-report.js" defer></script>
+<script src="assets/one-page-premium.js" defer></script>
 </body>
 </html>

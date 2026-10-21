@@ -26,6 +26,7 @@ async function initAdmin(){
   $('#tabAccounts').addEventListener('click',()=>switchAdminTab('accounts'));
   $('#tabSite').addEventListener('click',()=>switchAdminTab('site'));
   $('#createAccountForm').addEventListener('submit',createSubAdmin);
+  $('#newAdminRole').addEventListener('change',()=>{$('#newAdminDistrictRow').hidden=$('#newAdminRole').value!=='district_officer';});
   $('#refreshAccounts').addEventListener('click',refreshSubAdmins);
   $('#accountRows').addEventListener('click',handleAccountActions);
   $('#resetPasswordForm').addEventListener('submit',resetSubAdminPassword);
@@ -80,7 +81,7 @@ async function isAdministrator(user){
   if(error && (error.code==='42703' || error.message?.includes('does not exist'))){
     const old=await A.client().from('admins').select('user_id').eq('user_id',user.id).maybeSingle();
     data=old.data;error=old.error;currentRole='sub_admin';
-  }else currentRole=data?.role==='master_admin'?'master_admin':'sub_admin';
+  }else currentRole=data?.role==='master_admin'?'master_admin':data?.role==='district_officer'?'district_officer':'sub_admin';
   if(error)throw error;
   return !!data && data.is_active!==false;
 }
@@ -120,6 +121,7 @@ async function login(e){
 }
 async function showDashboard(){
   signedIn=true;
+  if(A.configured&&currentRole==='district_officer'){location.replace('district.html');return;}
   $('#loginView').hidden=true;$('#dashboardView').hidden=false;
   $('#importDemo').hidden=A.configured;
   $('#adminTabs').hidden=!A.configured||currentRole!=='master_admin';
@@ -411,9 +413,9 @@ async function createSubAdmin(e){
     checkStrongPassword(password);
     if(password!==confirmation)throw new Error('ยืนยันรหัสผ่านไม่ตรงกัน');
     if(!$('#accountApproval').checked)throw new Error('กรุณายืนยันสิทธิ์การสร้างบัญชี');
-    if(!confirm('ยืนยันสร้าง Admin รองชื่อ '+username+'?\nเจ้าหน้าที่คนนี้จะเพิ่ม แก้ไข และลบข้อมูลสินค้าได้'))return;
+    if(!confirm('ยืนยันสร้างบัญชี '+username+' ตามบทบาทที่เลือก?'))return;
     $('#submitNewAdmin').disabled=true;setError('#accountCreateMessage','กำลังสร้างบัญชี...');
-    await adminOperation({action:'create',username,display_name,password});
+    await adminOperation({action:'create',username,display_name,password,role:$('#newAdminRole').value,district:$('#newAdminRole').value==='district_officer'?$('#newAdminDistrict').value:null});
     form.reset();setError('#accountCreateMessage','สร้างบัญชี '+username+' สำเร็จ กรุณาส่ง Username/Password ให้เจ้าหน้าที่ผ่านช่องทางส่วนตัวที่ปลอดภัย');
     await refreshSubAdmins();
   }catch(err){setError('#accountCreateMessage','สร้างบัญชีไม่สำเร็จ: '+(err.message||err));}
@@ -430,7 +432,7 @@ async function refreshSubAdmins(){
 function renderSubAdmins(){
   if(!accountRows.length){$('#accountRows').innerHTML='<p class="muted">ยังไม่มีบัญชี Admin รอง</p>';return;}
   $('#accountRows').innerHTML=accountRows.map(row=>{
-    const id=A.esc(row.user_id),status=row.is_active!==false;
+    const id=A.esc(row.user_id),status=row.is_active!==false;const roleTitle=row.role==='district_officer'?'เจ้าหน้าที่อำเภอ'+(row.district||''):'Admin รอง';
     return '<article class="account-item"><div><b>'+A.esc(row.display_name||row.username)+'</b><small>Username: '+A.esc(row.username)+'</small><span class="account-status'+(status?'':' is-disabled')+'">'+(status?'เปิดใช้งาน':'ระงับสิทธิ์')+'</span></div><div class="account-actions"><button class="admin-secondary" data-reset-admin="'+id+'" type="button">เปลี่ยนรหัส</button><button class="admin-secondary" data-toggle-admin="'+id+'" type="button">'+(status?'ปิดสิทธิ์':'เปิดสิทธิ์')+'</button></div></article>';
   }).join('');
 }

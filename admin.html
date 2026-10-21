@@ -77,7 +77,9 @@
             <form id="createAccountForm" class="admin-form" autocomplete="off">
               <label>ชื่อเจ้าหน้าที่ / ชื่อที่แสดง <input name="display_name" id="newAdminName" maxlength="100" placeholder="เช่น เจ้าหน้าที่พัฒนาชุมชนอำเภอปาย" required></label>
               <label>Username (ภาษาอังกฤษ ตัวเลข _ . -) <input name="username" id="newAdminUsername" minlength="4" maxlength="24" pattern="[a-z][a-z0-9_.\-]{3,23}" placeholder="เช่น otop_pai" autocomplete="off" autocapitalize="off" spellcheck="false" required></label>
-              <label>กำหนด Password <span class="password-control"><input name="password" id="newAdminPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 12 ตัวอักษร มีตัวอักษรและตัวเลข" required><button type="button" class="toggle-password" data-toggle-password="newAdminPassword" aria-controls="newAdminPassword" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
+              <label>ประเภทบัญชี<select id="newAdminRole"><option value="sub_admin">Admin รอง</option><option value="district_officer">เจ้าหน้าที่อำเภอ</option></select></label>
+<label id="newAdminDistrictRow" hidden>อำเภอที่รับผิดชอบ<select id="newAdminDistrict"><option value="">เลือกอำเภอ</option><option value="เมืองแม่ฮ่องสอน">เมืองแม่ฮ่องสอน</option><option value="ปาย">ปาย</option><option value="ปางมะผ้า">ปางมะผ้า</option><option value="ขุนยวม">ขุนยวม</option><option value="แม่ลาน้อย">แม่ลาน้อย</option><option value="แม่สะเรียง">แม่สะเรียง</option><option value="สบเมย">สบเมย</option></select></label>
+<label>กำหนด Password <span class="password-control"><input name="password" id="newAdminPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" placeholder="อย่างน้อย 12 ตัวอักษร มีตัวอักษรและตัวเลข" required><button type="button" class="toggle-password" data-toggle-password="newAdminPassword" aria-controls="newAdminPassword" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
               <label>ยืนยัน Password <span class="password-control"><input name="confirm_password" id="newAdminConfirm" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><button type="button" class="toggle-password" data-toggle-password="newAdminConfirm" aria-controls="newAdminConfirm" aria-pressed="false" aria-label="แสดงรหัสผ่าน">แสดง</button></span></label>
               <label class="account-checkbox"><input type="checkbox" id="accountApproval" required><span>ตรวจสอบชื่อผู้ใช้และยืนยันว่ามีอำนาจอนุมัติให้เจ้าหน้าที่คนนี้เข้าถึงข้อมูลสินค้า</span></label>
               <button class="admin-primary" id="submitNewAdmin" type="submit">ยืนยันและสร้าง Admin รอง</button>
@@ -215,5 +217,6 @@
   </form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="assets/config.js"></script><script src="assets/shared.js"></script><script src="assets/drive-media.js"></script><script src="assets/drive-migration.js" defer></script><script src="assets/admin.js" defer></script><script src="assets/sheets-csv.js" defer></script><script src="assets/site-settings.js" defer></script><script src="assets/site-settings-admin.js" defer></script><script src="assets/one-page-launcher.js" defer></script>
+  <script src="assets/district-admin-links.js" defer></script>
 </body>
 </html>

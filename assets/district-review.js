@@ -1,4 +1,4 @@
-(()=>{'use strict';const O=window.OTOP,$=id=>document.getElementById(id),esc=O.esc;let ready=false,busy=false;
+(()=>{'use strict';const O=window.OTOP,$=id=>document.getElementById(id),esc=O.esc;let ready=false,busy=false,loadingReview=false,lastReviewRefresh=Date.now();
 const msg=(s,e=false)=>{$('status').textContent=s;$('status').classList.toggle('error',e);};
 async function auth(){const r=await O.client().auth.getUser();if(r.error||!r.data?.user)throw Error('กรุณาเข้าสู่ระบบ Admin');const a=await O.client().from('admins').select('role,is_active').eq('user_id',r.data.user.id).single();if(a.error||a.data?.role!=='master_admin'||!a.data?.is_active)throw Error('เฉพาะ Admin หลักที่สามารถอนุมัติข้อมูลได้');ready=true;}
 function str(x){return x===null||x===undefined?'':String(x);}
@@ -7,11 +7,20 @@ async function load(){if(!ready)return;msg('กำลังโหลดราย
  const allow=['name','category','price','unit','producer','shop','description','story','address','phone','line','facebook','image','lat','lng'];
  $('requests').innerHTML=records.map(r=>{const orig=previous.get(r.product_id)||{},data=r.payload||{};const changed=allow.filter(k=>r.action==='create'||str(orig[k])!==str(data[k]));const comparison=changed.map(k=>`<tr><td>${esc(k)}</td><td>${esc(r.action==='create'?'—':str(orig[k]))}</td><td>${esc(str(data[k]))}</td></tr>`).join('');
  return `<article class="request"><header><div><strong>#${r.id} · ${esc(data.name||'ไม่ระบุชื่อ')}</strong><p>${esc(r.district)} · ${r.action==='create'?'เสนอสินค้าใหม่':'เสนอแก้ไขสินค้า #'+r.product_id} · ${new Date(r.submitted_at).toLocaleString('th-TH')}</p></div><span class="tag ${esc(r.status)}">${r.status==='pending'?'รออนุมัติ':r.status==='approved'?'อนุมัติแล้ว':'ไม่อนุมัติ'}</span></header><details><summary>ดูข้อมูลที่เปลี่ยน (${changed.length} ช่อง)</summary><div class="table-wrap"><table><thead><tr><th>ข้อมูล</th><th>เดิม</th><th>เสนอใหม่</th></tr></thead><tbody>${comparison}</tbody></table></div></details>${r.status==='pending'?`<label class="tiny">หมายเหตุการพิจารณา<input data-note="${r.id}" maxlength="500" placeholder="กรอกเหตุผลเมื่อไม่อนุมัติ"></label><div class="action-row"><button type="button" class="btn" data-review="${r.id}" data-approve="true">อนุมัติ</button><button type="button" class="btn secondary" data-review="${r.id}" data-approve="false">ตีกลับ</button></div>`:r.review_note?`<p>หมายเหตุ: ${esc(r.review_note)}</p>`:''}</article>`;}).join('')||'<p class="muted">ไม่มีคำขอในสถานะนี้</p>';
- msg('พบ '+records.length+' คำขอ · สถานะ '+$('statusFilter').selectedOptions[0].text);
+  lastReviewRefresh=Date.now();
+  msg('พบ '+records.length+' คำขอ · สถานะ '+$('statusFilter').selectedOptions[0].text);
 }
 async function action(e){const b=e.target.closest('[data-review]');if(!b||busy)return;const approve=b.dataset.approve==='true',id=Number(b.dataset.review),note=document.querySelector(`[data-note="${id}"]`)?.value.trim()||'';
  if(!approve&&!note){msg('กรุณากรอกเหตุผลที่ไม่อนุมัติ',true);return;}if(!window.confirm((approve?'อนุมัติ':'ตีกลับ')+'คำขอ #'+id+'? ระบบจะบันทึกผลลงฐานข้อมูลจริง'))return;
  busy=true;b.disabled=true;try{const r=await O.client().rpc('otop_review_request',{p_request_id:id,p_approve:approve,p_note:note});if(r.error)throw r.error;msg('ดำเนินการคำขอ #'+id+' สำเร็จ'+(approve&&r.data?' · สินค้า #'+r.data:''));await load();}catch(err){msg('พิจารณาไม่สำเร็จ: '+(err.message||err),true);}finally{busy=false;b.disabled=false;}}
-async function start(){try{if(!O.configured)throw Error('ไม่ได้ตั้งค่า Supabase');await auth();$('districtFilter').innerHTML+=[...O.DISTRICTS].map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');$('requests').addEventListener('click',action);$('refresh').addEventListener('click',()=>load().catch(e=>msg(e.message,true)));$('statusFilter').addEventListener('change',()=>load().catch(e=>msg(e.message,true)));$('districtFilter').addEventListener('change',()=>load().catch(e=>msg(e.message,true)));$('reviewApp').hidden=false;await load();}catch(err){msg('เข้าใช้งานไม่ได้: '+(err.message||err),true);}}
+
+async function safeReviewRefresh(){
+  if(!ready||busy||loadingReview||document.hidden||[...document.querySelectorAll('[data-note]')].some(el=>el.value.trim()))return;
+  loadingReview=true;
+  try{await load();msg('รายการคำขอรีเฟรชจาก Supabase ล่าสุด '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.');}
+  catch(e){msg('รีเฟรชคำขอไม่สำเร็จ: '+(e.message||e),true);}
+  finally{loadingReview=false;}
+}
+async function start(){try{if(!O.configured)throw Error('ไม่ได้ตั้งค่า Supabase');await auth();$('districtFilter').innerHTML+=[...O.DISTRICTS].map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');$('requests').addEventListener('click',action);$('refresh').addEventListener('click',()=>load().catch(e=>msg(e.message,true)));$('statusFilter').addEventListener('change',()=>load().catch(e=>msg(e.message,true)));$('districtFilter').addEventListener('change',()=>load().catch(e=>msg(e.message,true)));$('reviewApp').hidden=false;await load();setInterval(()=>{void safeReviewRefresh();},5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastReviewRefresh>=5*60*1000)void safeReviewRefresh();});}catch(err){msg('เข้าใช้งานไม่ได้: '+(err.message||err),true);}}
 document.addEventListener('DOMContentLoaded',start);
 })();

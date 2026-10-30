@@ -101,4 +101,6 @@
   });
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load);
   else load();
+  // Public-facing text and cover from Supabase; skip preview frames and background tabs.
+  setInterval(()=>{if(!document.hidden&&!previewActive&&document.getElementById('home'))void load();},5*60*1000);
 })();

@@ -1,4 +1,4 @@
-(()=>{'use strict';const O=window.OTOP,$=id=>document.getElementById(id),msg=(s,e=false)=>{$('message').textContent=s;$('message').classList.toggle('error',e);};let officer=null,products=[],requests=[];
+(()=>{'use strict';const O=window.OTOP,$=id=>document.getElementById(id),msg=(s,e=false)=>{$('message').textContent=s;$('message').classList.toggle('error',e);};let officer=null,products=[],requests=[],formDirty=false,loading=false,lastDistrictRefresh=Date.now();
 const esc=O.esc;
 async function auth(){if(!O.configured)throw Error('ระบบต้องเชื่อม Supabase');const a=await O.client().auth.getUser();if(a.error||!a.data?.user)throw Error('กรุณาเข้าสู่ระบบ Admin ก่อน');let r=await O.client().from('admins').select('role,district,is_active').eq('user_id',a.data.user.id).single();if(r.error||!r.data?.is_active||r.data.role!=='district_officer')throw Error('หน้านี้สำหรับเจ้าหน้าที่ประจำอำเภอที่ได้รับสิทธิ์เท่านั้น');if(!O.DISTRICTS.includes(r.data.district))throw Error('บัญชียังไม่ได้รับการมอบหมายอำเภอ');officer={...r.data,user_id:a.data.user.id};$('myDistrict').textContent=r.data.district;}
 async function load(){const a=await O.client().from('products').select('*').eq('district',officer.district).order('id',{ascending:false});if(a.error)throw a.error;products=a.data||[];
@@ -6,7 +6,16 @@ async function load(){const a=await O.client().from('products').select('*').eq('
  $('myCount').textContent=products.length;$('pending').textContent=requests.filter(x=>x.status==='pending').length;$('approved').textContent=requests.filter(x=>x.status==='approved').length;
  $('productId').innerHTML=products.map(p=>`<option value="${p.id}">#${p.id} · ${esc(p.name)}</option>`).join('');
  $('products').innerHTML=products.map(p=>`<tr><td>${esc(p.name)}</td><td>${O.money(p.price)}</td><td><span class="tag">${p.is_published?'เผยแพร่':'ร่าง'}</span></td><td><button class="btn secondary" type="button" data-edit="${p.id}">เสนอแก้ไข</button></td></tr>`).join('')||'<tr><td colspan="4">ยังไม่มีสินค้า</td></tr>';
- $('requests').innerHTML=requests.map(r=>`<article class="request"><header><strong>#${r.id} · ${esc(r.payload?.name||'สินค้า')}</strong><span class="tag ${esc(r.status)}">${r.status==='pending'?'รออนุมัติ':r.status==='approved'?'อนุมัติแล้ว':'ตีกลับ'}</span></header><p>${r.action==='create'?'เพิ่มสินค้า':'แก้ไขสินค้า'} · ${new Date(r.submitted_at).toLocaleDateString('th-TH')}</p>${r.review_note?`<p>หมายเหตุ: ${esc(r.review_note)}</p>`:''}</article>`).join('')||'<p class="muted">ยังไม่มีคำขอ</p>';
+  lastDistrictRefresh=Date.now();
+  $('requests').innerHTML=requests.map(r=>`<article class="request"><header><strong>#${r.id} · ${esc(r.payload?.name||'สินค้า')}</strong><span class="tag ${esc(r.status)}">${r.status==='pending'?'รออนุมัติ':r.status==='approved'?'อนุมัติแล้ว':'ตีกลับ'}</span></header><p>${r.action==='create'?'เพิ่มสินค้า':'แก้ไขสินค้า'} · ${new Date(r.submitted_at).toLocaleDateString('th-TH')}</p>${r.review_note?`<p>หมายเหตุ: ${esc(r.review_note)}</p>`:''}</article>`).join('')||'<p class="muted">ยังไม่มีคำขอ</p>';
+}
+
+async function safeRefreshDistrict(){
+  if(document.hidden||!officer||loading||formDirty||!$('workspace')||$('workspace').hidden)return;
+  loading=true;
+  try{await load();msg('ข้อมูลสินค้าและคำขออัปเดตจาก Supabase เวลา '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.');}
+  catch(e){msg('รีเฟรชข้อมูลไม่สำเร็จ: '+(e.message||e),true);}
+  finally{loading=false;}
 }
 function setForm(p){for(const el of $('requestForm').elements){if(!el.name)continue;el.value=p?.[el.name]??(el.name==='unit'?'ชิ้น':'');}if(p)$('productId').value=p.id;}
 function toggleMode(){const edit=$('requestMode').value==='update';$('editProductWrap').hidden=!edit;if(edit){if(products.length){const p=products.find(x=>String(x.id)===$('productId').value)||products[0];setForm(p);}else msg('ยังไม่มีสินค้าที่เลือกแก้ไข',true);}else setForm(null);}
@@ -25,7 +34,9 @@ async function submit(e){e.preventDefault();const btn=$('submitRequest');btn.dis
  }catch(err){msg('ส่งคำขอไม่สำเร็จ: '+(err.message||err),true);}finally{btn.disabled=false;}}
 async function start(){try{await auth();$('category').innerHTML='<option value="">เลือกหมวด</option>'+O.CATEGORIES.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');$('requestMode').addEventListener('change',toggleMode);$('productId').addEventListener('change',()=>setForm(products.find(x=>String(x.id)===$('productId').value)));
  $('products').addEventListener('click',e=>{const b=e.target.closest('[data-edit]');if(!b)return;$('requestMode').value='update';$('productId').value=b.dataset.edit;toggleMode();$('requestForm').scrollIntoView({behavior:'smooth',block:'start'});});
- $('requestForm').addEventListener('submit',submit);$('requestForm').addEventListener('reset',()=>setTimeout(toggleMode,0));await load();$('workspace').hidden=false;msg('เข้าสู่ระบบเจ้าหน้าที่อำเภอ'+officer.district+' · ส่งคำขออนุมัติได้แล้ว');
+ $('requestForm').addEventListener('submit',submit);$('requestForm').addEventListener('input',()=>{formDirty=true;});$('requestForm').addEventListener('change',()=>{formDirty=true;});$('requestForm').addEventListener('reset',()=>{formDirty=false;setTimeout(toggleMode,0);});await load();$('workspace').hidden=false;msg('เข้าสู่ระบบเจ้าหน้าที่อำเภอ'+officer.district+' · ส่งคำขออนุมัติได้แล้ว');
+  setInterval(()=>{void safeRefreshDistrict();},5*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastDistrictRefresh>=5*60*1000)void safeRefreshDistrict();});
  }catch(err){msg('ไม่สามารถใช้งานหน้านี้: '+(err.message||err),true);}}
 document.addEventListener('DOMContentLoaded',start);
 })();

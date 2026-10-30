@@ -7,7 +7,25 @@ const SUB_ACCOUNT_SUFFIX='@accounts.otop-admin.example.com';
 const SESSION_KEY='otop_mhs_2570_demo_session';
 const setError=(id,msg)=>$(id).textContent=msg||'';
 
+// Every five minutes refresh only the product list (never reset a form currently being edited).
+const REFRESH_MS=5*60*1000;
+let autoRefreshRunning=false,lastAdminRefresh=Date.now();
+async function refreshAdminCatalog(){
+  if(!signedIn||busy||autoRefreshRunning||document.hidden||document.querySelector('dialog[open]'))return;
+  autoRefreshRunning=true;
+  try{
+    const success=await refreshRecords();
+    if(success){lastAdminRefresh=Date.now();setError('#dashboardStatus','รายการสินค้ารีเฟรชจากฐานข้อมูลล่าสุด เวลา '+new Date(lastAdminRefresh).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.');}
+  }finally{autoRefreshRunning=false;}
+}
+function startAdminAutoRefresh(){
+  setInterval(()=>{if(Date.now()-lastAdminRefresh>=REFRESH_MS)void refreshAdminCatalog();},REFRESH_MS);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastAdminRefresh>=REFRESH_MS)void refreshAdminCatalog();});
+}
+
+
 async function initAdmin(){
+  startAdminAutoRefresh();
   $('#loginForm').addEventListener('submit',login);
   // Password visibility is only local to the current input; nothing is stored or retrieved.
   document.addEventListener('click',e=>{
@@ -154,7 +172,8 @@ async function refreshRecords(){
       records=all;
     }else records=await A.allDemoProducts();
     renderRows();
-  }catch(e){setError('#dashboardStatus','อ่านรายการสินค้าไม่สำเร็จ: '+e.message);}
+    return true;
+  }catch(e){setError('#dashboardStatus','อ่านรายการสินค้าไม่สำเร็จ: '+e.message);return false;}
 }
 function renderRows(){
   const term=$('#adminSearch').value.trim().toLowerCase();

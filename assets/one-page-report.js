@@ -20,12 +20,12 @@ function fmtMoney(value){const n=Number(value);return Number.isFinite(n)?new Int
 function queryId(){return new URLSearchParams(location.search).get('id')||'';}
 async function start(){
   if(!O?.configured){return deny('ระบบรายงาน One Page ต้องเชื่อม Supabase จึงจะใช้กับข้อมูลจริงได้');}
-  let user;
+  let user, member;
   try{
     const response=await O.client().auth.getUser();
     user=response.data.user;
     if(response.error||!user)throw new Error('ไม่ได้เข้าสู่ระบบ');
-    const member=await O.client().from('admins').select('user_id,role,is_active,district').eq('user_id',user.id).maybeSingle();
+    member=await O.client().from('admins').select('user_id,role,is_active,district').eq('user_id',user.id).maybeSingle();
     if(member.error||!member.data||member.data.is_active!==true)throw new Error('บัญชีนี้ไม่มีสิทธิ์ผู้ดูแลที่เปิดใช้งาน');
   }catch(err){return deny('กรุณาเข้าสู่ระบบ Admin ก่อนเข้า One Page ('+(err.message||'เซสชันหมดอายุ')+')');}
   officerDistrict=member.data.role==='district_officer'?member.data.district:null;
@@ -34,8 +34,60 @@ async function start(){
   $('guard').hidden=true;$('reportApp').hidden=false;
   await loadProducts();
   attachEvents();
+  startAutoRefresh();
 }
 function deny(message){$('guard').querySelector('h1').textContent='ไม่สามารถเปิด One Page ได้';$('guard').querySelector('p').textContent=message;}
+
+// Refresh database-backed product information without resetting report edits or overwriting unsaved fields.
+const REFRESH_MS=5*60*1000;
+let refreshingBase=false,lastBaseRefresh=Date.now();
+async function refreshBaseProducts(){
+  if(refreshingBase||working||document.hidden||!authorizedUser||!$('reportApp')||$('reportApp').hidden)return;
+  refreshingBase=true;
+  try{
+    const auth=await O.client().auth.getUser();
+    if(auth.error||!auth.data?.user||auth.data.user.id!==authorizedUser.id){
+      $('reportApp').hidden=true;$('guard').hidden=false;
+      deny('เซสชัน Admin หมดอายุ กรุณาเข้าสู่ระบบใหม่');return;
+    }
+    const rows=[],limit=500;
+    for(let offset=0;offset<20000;offset+=limit){
+      let q=O.client().from('products').select('*');
+      if(officerDistrict)q=q.eq('district',officerDistrict);
+      const r=await q.order('id',{ascending:false}).range(offset,offset+limit-1);
+      if(r.error)throw r.error;
+      rows.push(...(r.data||[]));
+      if(!r.data||r.data.length<limit)break;
+    }
+    const savedChoice=$('productSelect').value,oldSelectedId=selected?.id;
+    products=rows;
+    if(oldSelectedId!=null){
+      const current=rows.find(p=>String(p.id)===String(oldSelectedId));
+      if(current){selected=current;render();}
+      else {selected=null;loadedFor=null;render();setStatus('สินค้าเดิมถูกลบหรือสิทธิ์เปลี่ยน กรุณาเลือกสินค้าใหม่',true);}
+    }
+    // Rebuild selector without calling selectProduct(): that would erase unsaved edits.
+    const district=getVal('districtSelect'),search=getVal('productSearch').toLowerCase();
+    const choices=rows.filter(p=>(!district||p.district===district)&&(!search||[p.name,p.producer,p.shop,p.category].join(' ').toLowerCase().includes(search)));
+    $('productSelect').innerHTML=choices.map(p=>`<option value="${Number(p.id)}">#${Number(p.id)} · ${escapeHtml(p.name||'(ไม่มีชื่อ)')} — ${escapeHtml(p.district||'')}</option>`).join('')||'<option value="">ไม่พบสินค้า</option>';
+    // Keep the report item visible even when its updated district/name no longer matches active filters.
+    if(selected&&!choices.some(p=>String(p.id)===String(selected.id))){
+      const option=document.createElement('option');option.value=String(selected.id);
+      option.textContent='#'+selected.id+' · '+selected.name+' (กำลังแก้ไข · ไม่ตรงตัวกรอง)';
+      $('productSelect').prepend(option);
+    }
+    if(selected)$('productSelect').value=String(selected.id);
+    else if(choices.some(p=>String(p.id)===String(savedChoice)))$('productSelect').value=savedChoice;
+    lastBaseRefresh=Date.now();
+    $('productStatus').textContent=`พบสินค้า ${rows.length} รายการ · รีเฟรชฐานข้อมูลล่าสุด ${new Date(lastBaseRefresh).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})} น. · ข้อมูลที่กรอกยังคงอยู่`;
+  }catch(err){setStatus('รีเฟรชฐานข้อมูลไม่สำเร็จ: '+(err.message||err)+' · ข้อมูลที่กรอกไม่ได้ถูกลบ',true);}
+  finally{refreshingBase=false;}
+}
+function startAutoRefresh(){
+  setInterval(()=>{if(Date.now()-lastBaseRefresh>=REFRESH_MS)void refreshBaseProducts();},REFRESH_MS);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastBaseRefresh>=REFRESH_MS)void refreshBaseProducts();});
+}
+
 async function loadProducts(){
   try{
     const all=[],limit=500;let startAt=0;

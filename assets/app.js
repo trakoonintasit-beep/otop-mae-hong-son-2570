@@ -3,10 +3,12 @@ const O = window.OTOP;
 const $ = selector => document.querySelector(selector);
 let products = []; let filtered = []; let map; let markers=[];
 let currentProductId=null;let visibleLimit=8;
+const REFRESH_MS=5*60*1000;let refreshingCatalog=false,lastCatalogRefresh=Date.now();
 const PER_PAGE=8;
 
 async function loadProducts() {
   try {
+    const lastCategory=$('#categoryFilter').value,lastDistrict=$('#districtFilter').value;
     products = await O.sourceProducts();
     $('#totalProducts').textContent = products.length;
     $('#dataBadgeTitle').textContent = O.configured ? 'ข้อมูลออนไลน์' : 'ข้อมูลสาธิต';
@@ -14,13 +16,27 @@ async function loadProducts() {
     $('#dataBadge').textContent = O.configured ? 'ข้อมูลจากฐานข้อมูลออนไลน์ ตรวจสอบข้อมูลกับผู้ผลิตก่อนใช้' : 'การแก้ไขในโหมดสาธิตบันทึกเฉพาะเบราว์เซอร์นี้';
     $('#categoryFilter').innerHTML = '<option value="">ทุกหมวด</option>' + O.CATEGORIES.map(v=>`<option value="${O.esc(v)}">${O.esc(v)}</option>`).join('');
     $('#districtFilter').innerHTML = '<option value="">ทุกอำเภอ</option>' + O.DISTRICTS.map(v=>`<option value="${O.esc(v)}">${O.esc(v)}</option>`).join('');
+    if(O.CATEGORIES.includes(lastCategory))$('#categoryFilter').value=lastCategory;
+    if(O.DISTRICTS.includes(lastDistrict))$('#districtFilter').value=lastDistrict;
     renderCategoryQuickFilters();
     applyFilters();
-    if (location.hash.startsWith('#product-')) openFromHash();
+    if (location.hash.startsWith('#product-') && !$('#productDialog').open) openFromHash();
+    lastCatalogRefresh=Date.now();
+    return true;
   } catch(error) {
     $('#resultCount').textContent = 'เกิดข้อผิดพลาด';
     $('#productGrid').innerHTML = `<p class="error-note" role="alert">โหลดสินค้าไม่สำเร็จ: ${O.esc(error.message)}</p>`;
+    return false;
   }
+}
+
+async function refreshCatalog(){
+  if(document.hidden||refreshingCatalog||$('#productDialog')?.open)return;
+  refreshingCatalog=true;
+  try{
+    const success=await loadProducts();
+    if(success&&$('#dataBadge'))$('#dataBadge').textContent+=' · ข้อมูลอัปเดต '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
+  }finally{refreshingCatalog=false;}
 }
 function init() {
   for (const selector of ['#searchInput','#categoryFilter','#districtFilter','#sortFilter']) {
@@ -40,6 +56,8 @@ function init() {
   $('#dialogContent').addEventListener('click',e=>{const b=e.target.closest('[data-map-product]');if(b)focusOnMap(Number(b.dataset.mapProduct));});
   $('#mapList').addEventListener('click',e=>{const prod=e.target.closest('[data-map-open-product]');if(prod){openProduct(Number(prod.dataset.mapOpenProduct));return;}const b=e.target.closest('[data-shop-index]');if(b)focusShop(Number(b.dataset.shopIndex));});
   initMap(); loadProducts(); initVisitorCounter();
+  setInterval(()=>{void refreshCatalog();},REFRESH_MS);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastCatalogRefresh>=REFRESH_MS)void refreshCatalog();});
   window.addEventListener('storage', e=> { if(e.key===O.STORAGE_KEY)loadProducts(); });
   window.addEventListener('focus',()=>{if(!O.configured)loadProducts();});
 }

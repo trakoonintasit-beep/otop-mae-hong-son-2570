@@ -16,5 +16,12 @@ async function start(){try{
  $('recentRows').innerHTML=products.sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0)).slice(0,15).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.district)}</td><td>${esc(p.category)}</td><td><span class="tag ${p.is_published?'':'pending'}">${p.is_published?'เผยแพร่':'ร่าง'}</span></td><td>${O.money(p.price)}</td></tr>`).join('')||'<tr><td colspan="5">ยังไม่มีข้อมูลสินค้า</td></tr>';
  $('dashboard').hidden=false;status(isOfficer?'ข้อมูลของอำเภอ'+district+' ตามสิทธิ์เจ้าหน้าที่':'ข้อมูลระดับจังหวัดครบ 7 อำเภอ · อัปเดตจาก Supabase');
  }catch(e){status('เปิด Dashboard ไม่สำเร็จ: '+(e.message||e),true);}}
-document.addEventListener('DOMContentLoaded',start);
+ let dashboardRefreshing=false;let dashboardLastRefresh=0;
+ async function safeRefresh(){
+  if(dashboardRefreshing||document.hidden)return;
+  dashboardRefreshing=true;
+  try{await start();if(!$('status').classList.contains('error')){dashboardLastRefresh=Date.now();$('status').textContent+=' · รีเฟรช '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';}}
+  finally{dashboardRefreshing=false;}
+ }
+ document.addEventListener('DOMContentLoaded',()=>{void safeRefresh();setInterval(()=>{void safeRefresh();},5*60*1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-dashboardLastRefresh>=5*60*1000)void safeRefresh();});});
 })();
